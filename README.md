@@ -1,10 +1,10 @@
-# spartadata
+# SpartaData
 
-A Clojure library designed to ... well, that part is up to you.
+SDMX compliant data repository for ERD - in support of the Sparta project 
 
 ## Usage
 
-FIXME
+Read the documentation [here](doc).
 
 ## License
 
