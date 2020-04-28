@@ -1,4 +1,4 @@
-(ns sdmx-database.database-test
+(ns spartadata.database-test
   (:require [clojure.data.xml :as xml]
             [clojure.data.zip.xml :as zip-xml]
             [clojure.test :refer :all]
@@ -7,11 +7,11 @@
             [hikari-cp.core :refer [make-datasource close-datasource]]
             [hugsql.core :as sql]
             [java-time]
-            [sdmx-database.database.delete :refer [delete-dataset]]
-            [sdmx-database.database.retrieve :refer [retrieve-data-message]]
-            [sdmx-database.database.rollback :refer [rollback-release]]
-            [sdmx-database.database.upload :refer [upload-data-message]]
-            [sdmx-database.database.upload-historical :refer [upload-historical-data-message]]))
+            [spartadata.database.delete :refer [delete-dataset]]
+            [spartadata.database.retrieve :refer [retrieve-data-message]]
+            [spartadata.database.rollback :refer [rollback-release]]
+            [spartadata.database.upload :refer [upload-data-message]]
+            [spartadata.database.upload-historical :refer [upload-historical-data-message]]))
 
 (sql/def-db-fns "sql/query.sql")
 
@@ -75,7 +75,6 @@
         (upload-data-message dbconn dataset xml-file3 :release? true :release-description "Second release")
         (let [from-file (-> xml-file1 xml/parse-str zip/xml-zip)
               from-database (zip/xml-zip (retrieve-data-message dbconn dataset nil :validate? true :release (java-time/sql-timestamp "2010-01-31T00:00:00")))]
-          (debug-repl)
           (is (= (get-test-obs from-file "1001" "2001")
                  (get-test-obs from-database "1001" "2001"))))
         (let [latest-release (:embargo (get-latest-release dbconn dataset-id))
