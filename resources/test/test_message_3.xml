@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<message:CompactData xmlns:ns1="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=SARB.ERD:TEST(1.0):compact"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xmlns:message="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message"
+                     xsi:schemaLocation="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message https://registry.sdmx.org/schemas/v2_0/SDMXMessage.xsd urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=SARB.ERD:TEST(1.0):compact http://localhost:8080/FusionRegistry/ws/public/sdmxapi/rest/dataflow/SARB.ERD/TEST/1.0?format=sdmx-2.0">
+   <message:Header>
+      <message:ID>IREF913375</message:ID>
+      <message:Test>true</message:Test>
+      <message:Prepared>2020-04-15T22:23:42</message:Prepared>
+      <message:Sender id="TESTSUIT"/>
+      <message:Receiver id="TESTSERVER"/>
+   </message:Header>
+   <ns1:DataSet TEST_DATASET_ATTR="A">
+      <ns1:Series TEST_DIM1="1001" TEST_DIM2="2001" TEST_ATTR="A">
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="75.7" TIME_PERIOD="2008-01-31"/>
+         <ns1:Obs TEST_OBS_ATTR="B" OBS_VALUE="76.5" TIME_PERIOD="2008-02-29"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="77" TIME_PERIOD="2008-03-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="77.5" TIME_PERIOD="2008-04-30"/>
+         <ns1:Obs TEST_OBS_ATTR="B" OBS_VALUE="78" TIME_PERIOD="2008-05-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="78.2" TIME_PERIOD="2008-06-30"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="80.3" TIME_PERIOD="2008-07-31"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="80.6" TIME_PERIOD="2008-08-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="80.9" TIME_PERIOD="2008-09-30"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="81.2" TIME_PERIOD="2008-10-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="81.5" TIME_PERIOD="2008-11-30"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="83.2" TIME_PERIOD="2008-12-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="84.2" TIME_PERIOD="2009-01-31"/>
+      </ns1:Series>
+      <ns1:Series TEST_DIM1="1002" TEST_DIM2="2004" TEST_ATTR="A">
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="75.6" TIME_PERIOD="2008-01-31"/>
+         <ns1:Obs TEST_OBS_ATTR="B" OBS_VALUE="76.8" TIME_PERIOD="2008-02-29"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="77" TIME_PERIOD="2008-03-31"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="77.8" TIME_PERIOD="2008-04-30"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="78" TIME_PERIOD="2008-05-31"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="78.8" TIME_PERIOD="2008-06-30"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="79" TIME_PERIOD="2008-07-31"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="80.3" TIME_PERIOD="2008-08-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="81.9" TIME_PERIOD="2008-09-30"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="82.1" TIME_PERIOD="2008-10-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="82.4" TIME_PERIOD="2008-11-30"/>
+      </ns1:Series>
+      <ns1:Series TEST_DIM1="1002" TEST_DIM2="2001" TEST_ATTR="C">
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="75.5" TIME_PERIOD="2008-01-31"/>
+         <ns1:Obs TEST_OBS_ATTR="B" OBS_VALUE="75.8" TIME_PERIOD="2008-02-29"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="77" TIME_PERIOD="2008-03-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="77.5" TIME_PERIOD="2008-04-30"/>
+         <ns1:Obs TEST_OBS_ATTR="B" OBS_VALUE="78" TIME_PERIOD="2008-05-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="78.8" TIME_PERIOD="2008-06-30"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="79.9" TIME_PERIOD="2008-07-31"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="80.3" TIME_PERIOD="2008-08-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="80.9" TIME_PERIOD="2008-09-30"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="81.2" TIME_PERIOD="2008-10-31"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="81.2" TIME_PERIOD="2008-11-30"/>
+         <ns1:Obs TEST_OBS_ATTR="A" OBS_VALUE="81.5" TIME_PERIOD="2008-12-31"/>
+         <ns1:Obs TEST_OBS_ATTR="B" OBS_VALUE="82.2" TIME_PERIOD="2009-01-31"/>
+         <ns1:Obs TEST_OBS_ATTR="C" OBS_VALUE="83.2" TIME_PERIOD="2009-02-28"/>
+      </ns1:Series>
+   </ns1:DataSet>
+</message:CompactData>
