@@ -1,4 +1,5 @@
 {:system/jetty   {:port    3000
                   :join?   false
                   :handler #ig/ref :system/handler}
- :system/handler {}}
+ :system/handler {:cp #ig/ref :system/connection-pool}
+ :system/connection-pool {}}

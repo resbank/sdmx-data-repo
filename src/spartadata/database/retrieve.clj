@@ -20,7 +20,7 @@
 
 (xml/alias-uri 'messg "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message")
 
-(defn retrieve-data-message [db dataset dimensions & {:keys [start-period end-period release validate?] :or {validate? false}}]
+(defn retrieve-data-message [db {dataset :flow-ref dimensions :key} & {:keys [start-period end-period release validate?] :or {validate? false}}]
   "Usage: (retrieve-data-message db dimensions dataflow & {:keys [validate?] :or {validate? false}})
 
   Retrieve and return a (valid) data message from the database corresponding to the dimensions
@@ -31,7 +31,7 @@
         dimension-id-sets (for [pos (map inc (range (count dimensions)))
                                 :let [values (nth dimensions (dec pos))]]
                             (map :dimension_id
-                                 (if (= (first values) "all")
+                                 (if (empty? (first values))
                                    (get-dim-ids-by-pos db (assoc dataset-id :pos pos))
                                    (get-dim-ids-by-vals db (merge {:vals values :pos pos} dataset-id)))))
         ns1 (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")

@@ -12,19 +12,16 @@
             [reitit.ring.middleware.dev :as dev]
             [reitit.ring.spec :as spec]
             [spec-tools.spell :as spell]
+            [spartadata.handlers.sdmx :as sdmx]
             [muuntaja.core :as m]
             [clojure.spec.alpha :as s]
             [clojure.java.io :as io]))
 
-(defn delimit-with [delim regex]
-  (re-pattern (str regex "(" delim regex ")*")))
+(def id-type #"[\w@\$\-]+(\+[\w@\$\-]+)*")
+(def nested-nc-name-id-type #"[A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*(\+[A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*)*")
+(def multiple-versions-type #"\d+(\.\d+)*(\+\d+(\.\d+)*)*")
+(def version-type (re-pattern (str "(all|latest|" multiple-versions-type ")")))
 
-(def id-type (delimit-with "\\+" #"[\w@\$\-]+"))
-(def nested-nc-name-id-type (->> (delimit-with "\\." #"[A-Za-z][\w\-]*") (delimit-with "\\+")))
-(def all-type #"all")
-(def latest-type #"latest")
-(def multiple-versions-type (->> (delimit-with "\\." #"\d+") (delimit-with "\\+")))
-(def version-type (re-pattern (str "(" all-type "|" latest-type "|" multiple-versions-type ")")))
 (def flow-ref-type (re-pattern (str "^(" id-type "|(" nested-nc-name-id-type "(\\," id-type ")(\\," version-type ")?))$")))
 (def key-type (re-pattern (str "^(" id-type ")?" "(\\.(" id-type ")?)*$")))
 (def provider-ref-type (re-pattern (str "^(" nested-nc-name-id-type "\\,)?" id-type "$")))
@@ -35,7 +32,7 @@
 
 (s/def ::data-request (s/keys :req-un [::flow-ref ::key ::provider-ref]))
 
-(defn router []
+(defn router [connection-pool]
   (ring/ring-handler
     (ring/router
       [["/swagger.json"
@@ -43,18 +40,13 @@
                :swagger {:info {:title "SDMX Rest API"}}
                :handler (swagger/create-swagger-handler)}}]
 
-       ["/sdmx/restapi"
+       ["/sdmxapi/rest"
         {:swagger {:tags ["Data queries"]}}
 
         ["/data/{flow-ref}/{key}/{provider-ref}"
          {:get {:summary "SDMX data query"
                 :parameters {:path ::data-request}
-                :handler (fn [request]
-                           (let [params (get-in request [:parameters :path])]
-                           {:status 200
-                            :body (str {:flow-ref (:flow-ref params)
-                                        :key (map #(clojure.string/split % #"\+") (clojure.string/split (:key params) #"\." -1))
-                                        :provider-ref (:provider-ref params)})}))}}]
+                :handler (partial sdmx/data connection-pool)}}]
 
         ["/metadata/{flow-ref}/{key}/{provider-ref}"
          {:get {:summary "SDMX metadata query"
