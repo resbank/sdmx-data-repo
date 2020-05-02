@@ -1,4 +1,4 @@
-{:system/jetty   {:port    3000
+{:system/jetty   {:port    3030
                   :join?   false
                   :handler #ig/ref :system/handler}
  :system/handler {:cp #ig/ref :system/connection-pool}
