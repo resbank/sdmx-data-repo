@@ -112,6 +112,20 @@
 
        ["/sdmxapi/rest" 
 
+        ["/data/{flow-ref}"
+         {:get {:tags ["Data and Metadata Queries"]
+                :summary "SDMX data query"
+                :parameters {:path ::data-path-params
+                             :query ::data-query-params}
+                :handler (partial sdmx/data connection-pool)}}]
+
+        ["/data/{flow-ref}/{key}"
+         {:get {:tags ["Data and Metadata Queries"]
+                :summary "SDMX data query"
+                :parameters {:path ::data-path-params
+                             :query ::data-query-params}
+                :handler (partial sdmx/data connection-pool)}}]
+
         ["/data/{flow-ref}/{key}/{provider-ref}"
          {:get {:tags ["Data and Metadata Queries"]
                 :summary "SDMX data query"
