@@ -1,4 +1,8 @@
 (ns spartadata.application
+  (:gen-class
+    :methods [^:static [start ["[Ljava.lang.String;"] void]
+              ^:static [stop ["[Ljava.lang.String;"] void]]
+    :main false)
   (:require [environ.core :refer [env]]
             [hikari-cp.core :refer [make-datasource close-datasource]]
             [integrant.core :as ig]
@@ -24,5 +28,12 @@
 (defmethod ig/halt-key! :system/connection-pool [_ cp]
   (close-datasource cp))
 
-(defn -main []
-  (ig/init system-config))
+(defn start []
+  (alter-var-root #'system-config ig/init))
+
+(defn stop []
+  (alter-var-root #'system-config ig/halt!))
+
+(defn -start [args] (start))
+
+(defn -stop [args] (stop))

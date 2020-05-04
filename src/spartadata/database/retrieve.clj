@@ -65,7 +65,7 @@
 (declare json-observations)
 
 (defmethod retrieve-data-message "application/json"
-  [header db {dataflow :flow-ref dimensions :key unused :provider-ref} {validate? :validate :or {validate? false} :as options}]
+  [_ db {dataflow :flow-ref dimensions :key unused :provider-ref} {validate? :validate :or {validate? false} :as options}]
   (let [datasets (->> (for [agencyid (:agencyid dataflow)] 
                         (for [id (:id dataflow)] 
                           (for [version (:version dataflow)] 
@@ -154,7 +154,7 @@
 (declare sdmx-v2-0-observations)
 
 (defmethod retrieve-data-message :default
-  [header db {dataflow :flow-ref dimensions :key unused :provider-ref} {validate? :validate :or {validate? false} :as options}]
+  [_ db {dataflow :flow-ref dimensions :key unused :provider-ref} {validate? :validate :or {validate? false} :as options}]
   (let [datasets (->> (for [agencyid (:agencyid dataflow)] 
                         (for [id (:id dataflow)] 
                           (for [version (:version dataflow)] 
