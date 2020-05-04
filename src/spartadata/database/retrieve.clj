@@ -66,7 +66,7 @@
 (defn compile-data [db datasets dimensions options]
   (let [dataset-messages (compile-datasets db datasets dimensions options)]
     (if (empty? dataset-messages)
-      (sdmx-error 100 (str "No Dataflow exists for query : Target: Dataflow"
+      (sdmx-error 100 (str "No Dataflows exists for query : Target: Dataflow"
                            " - Agency Id: " (clojure.string/join "+" (map first datasets))
                            " - Maintainable Id: " (clojure.string/join "+" (map second datasets))
                            " - Version: " (clojure.string/join "+" (map last datasets))))
