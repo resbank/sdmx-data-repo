@@ -24,7 +24,7 @@
 
 (declare upload-historical-obs)
 
-(defn upload-historical-data-message [db dataset data-message next-release & {:keys [validate? release-description] :or {validate? true release-description nil}}]
+(defn upload-historical-data-message [db data-message {agencyid :agency-id id :resource-id version :version} {:keys [validate? next-release release-description] :or {validate? true}}]
   "Usage: (upload-data-message db dimensions dataflow & {:keys [validate?] :or {validate? true}})
 
   Validate and upload a data message. Duplicate series in the data message will be ignored.
@@ -32,13 +32,13 @@
   Historical data is data that contains previously released data that has yet to be uploaded. It requires that the next release be specified, 
   with the further requirement that it must follow chronologically from the previous release - but must be before the current time. A description 
   of the release may also be specified. This function is used for initialising the database, don't use it unless you are sure of how it works."
-  (let [{agencyid :agencyid id :id version :version} dataset]
-    (if validate? (validate-data (str (:sdmx-registry env) "schema/dataflow/" agencyid  "/" id "/" version "?format=sdmx-2.0") data-message))
-    (let [data-zipper (-> data-message xml/parse-str zip/xml-zip)
+  (if validate? (validate-data (str (:sdmx-registry env) "/sdmxapi/rest/schema/dataflow/" agencyid  "/" id "/" version "?format=sdmx-2.0") data-message))
+  (with-open [data-message (clojure.java.io/input-stream data-message)]
+    (let [data-zipper (-> data-message xml/parse zip/xml-zip)
           components (get-components agencyid id version)
           ns1  (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")
           next-release (java-time/local-date-time next-release)
-          dataset-id (upload-dataset db dataset (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
+          dataset-id (upload-dataset db {:agencyid agencyid :id id :version version} (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
           previous-release (get (or (get-latest-release db dataset-id)
                                     (insert-release db (merge {:embargo (java-time/sql-timestamp "0001-01-01T00:00:00") 
                                                                :description "Initial release"} 

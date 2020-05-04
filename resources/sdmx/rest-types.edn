@@ -6,12 +6,13 @@
  :flow-ref-type "([\\w@\\$\\-]+(\\+[\\w@\\$\\-]+)*|([A-Za-z][\\w\\-]*(\\.[A-Za-z][\\w\\-]*)*(\\+[A-Za-z][\\w\\-]*(\\.[A-Za-z][\\w\\-]*)*)*(\\,[\\w@\\$\\-]+(\\+[\\w@\\$\\-]+)*)(\\,(all|latest|\\d+(\\.\\d+)*(\\+\\d+(\\.\\d+)*)*))?))"
  :all-type "all"
  :latest-type "latest"
- :id-type "[\\w@\\$\\-]+(\\+[\\w@\\$\\-]+)*"
- :nc-name-id-type "[A-Za-z][\\w\\-]*(\\+[A-Za-z][\\w\\-]*)*"
+ :id-type "[\\w@\\$\\-]+(\\.[\\w@\\$\\-]+)*"
+ :nc-name-id-type "[A-Za-z][\\w\\-]*(\\.[A-Za-z][\\w\\-]*)*"
  :nested-nc-name-id-type "[A-Za-z][\\w\\-]*(\\.[A-Za-z][\\w\\-]*)*(\\+[A-Za-z][\\w\\-]*(\\.[A-Za-z][\\w\\-]*)*)*"
  :nested-id-type "[\\w@\\$\\-]+(\\.[\\w@\\$\\-]+)*(\\+[\\w@\\$\\-]+(\\.[\\w@\\$\\-]+)*)*"
+ :version-type "\\d+(\\.\\d+)*"
  :multiple-versions-type "\\d+(\\.\\d+)*(\\+\\d+(\\.\\d+)*)*"
- :version-type "(latest|all|\\d+(\\.\\d+)*(\\+\\d+(\\.\\d+)*)*)"
+ :nested-version-type "(latest|all|\\d+(\\.\\d+)*(\\+\\d+(\\.\\d+)*)*)"
  :schema-version-type  "(latest|all|\\d+(\\.\\d+)*(\\+\\d+(\\.\\d+)*)*)"
  :detail-type ["allstubs" "referencestubs" "referencepartial" "allcompletestubs" "referencecompletestubs" "full"]
  :references-type ["none" "parents" "parentsandsiblings" "children" "descendants" "all"]

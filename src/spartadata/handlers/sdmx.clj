@@ -1,7 +1,9 @@
 (ns spartadata.handlers.sdmx
   (:require [clojure.data.xml :as xml]
             [environ.core :refer [env]]
-            [spartadata.database.retrieve :refer [retrieve-data-message]]))
+            [spartadata.database.retrieve :refer [retrieve-data-message]]
+            [spartadata.database.upload :refer [upload-data-message]]
+            [spartadata.database.upload-historical :refer [upload-historical-data-message]]))
 
 (defn structure [request]
   {:status 301
@@ -34,20 +36,23 @@
         (assoc :body (xml/emit-str data-message)))))
 
 (defn data-upload [connection-pool request]
-  (let [params (get-in request [:parameters :path])
-        flow-ref-params (clojure.string/split (:flow-ref params) #",")]
-    {:status 201
-     :body {}}))
+  {:status 201
+   :body (try (upload-data-message {:datasource connection-pool} 
+                                   (get-in request [:parameters :multipart :file :tempfile])
+                                   (get-in request [:parameters :path])
+                                   (get-in request [:parameters :query])) 
+              (catch Exception e (do (.printStackTrace e) (throw e))))})
 
 (defn data-upload-hist [connection-pool request]
-  (let [params (get-in request [:parameters :path])
-        flow-ref-params (clojure.string/split (:flow-ref params) #",")]
-    {:status 201
-     :body {}}))
+  {:status 201
+   :body (try (upload-historical-data-message {:datasource connection-pool} 
+                                              (get-in request [:parameters :multipart :file :tempfile])
+                                              (get-in request [:parameters :path])
+                                              (get-in request [:parameters :query])) 
+              (catch Exception e (do (.printStackTrace e) (throw e))))})
 
 (defn data-rollback [connection-pool request]
-  (let [params (get-in request [:parameters :path])
-        flow-ref-params (clojure.string/split (:flow-ref params) #",")]
+  (let [params (get-in request [:parameters])]
     {:status 201
      :body {}}))
 

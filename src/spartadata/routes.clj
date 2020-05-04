@@ -18,9 +18,13 @@
             [clojure.java.io :as io]
             [clojure.spec.alpha :as s]))
 
-;; Data and metadata spec
+
 
 (def rest-types (edn/read-string (slurp "resources/sdmx/rest-types.edn")))
+
+
+;; Data and metadata spec
+
 (s/def ::flow-ref (s/and string? #(re-matches (re-pattern (:flow-ref-type rest-types)) %)))
 (s/def ::key (s/and string? #(re-matches (re-pattern (:key-type rest-types)) %)))
 (s/def ::provider-ref (s/and string? #(re-matches (re-pattern (:provider-ref-type rest-types)) %)))
@@ -46,7 +50,7 @@
 
 (s/def ::agency-id (s/and string? #(re-matches (re-pattern (:nc-name-id-type rest-types)) %)))
 (s/def ::resource-id (s/and string? #(re-matches (re-pattern (:id-type rest-types)) %)))
-(s/def ::version (s/and string? #(re-matches (re-pattern (:multiple-versions-type rest-types)) %)))
+(s/def ::version (s/and string? #(re-matches (re-pattern (:version-type rest-types)) %)))
 
 (s/def ::data-upload-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
@@ -62,7 +66,11 @@
 
 ;; Structural metadata spec
 
-(s/def ::struct-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+(s/def ::nested-agency-id (s/and string? #(re-matches (re-pattern (:nested-nc-name-id-type rest-types)) %)))
+(s/def ::nested-resource-id (s/and string? #(re-matches (re-pattern (:nested-id-type rest-types)) %)))
+(s/def ::nested-version (s/and string? #(re-matches (re-pattern (:nested-version-type rest-types)) %)))
+
+(s/def ::struct-path-params (s/keys :req-un [::nested-agency-id ::nested-resource-id ::nested-version]))
 
 (s/def ::item-id-1 (s/and string? #(re-matches (re-pattern (:nested-nc-name-id-type rest-types)) %)))
 (s/def ::item-id-2 (s/and string? #(re-matches (re-pattern (:id-type rest-types)) %)))
@@ -137,14 +145,16 @@
          {:post {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data post"
                  :parameters {:path ::data-upload-path-params
-                              :query ::data-upload-query-params}
+                              :query ::data-upload-query-params
+                              :multipart {:file multipart/temp-file-part}}
                  :handler (partial sdmx/data-upload connection-pool)}}]
 
         ["/data/upload/historical/{agency-id}/{resource-id}/{version}"
          {:post {:tags ["Data and Metadata Queries"]
                  :summary "SDMX historical data post"
                  :parameters {:path ::data-upload-path-params
-                              :query ::data-upload-hist-query-params}
+                              :query ::data-upload-hist-query-params
+                              :multipart {:file multipart/temp-file-part}}
                  :handler (partial sdmx/data-upload-hist connection-pool)}}]
 
         ["/data/rollback/{agency-id}/{resource-id}/{version}"
@@ -356,7 +366,9 @@
                            ;; coercing response bodys
                            coercion/coerce-response-middleware
                            ;; coercing request parameters
-                           coercion/coerce-request-middleware]}})
+                           coercion/coerce-request-middleware
+                           ;; multipart
+                           multipart/multipart-middleware]}})
     (ring/routes
       (swagger-ui/create-swagger-ui-handler
         {:path "/"

@@ -33,19 +33,20 @@
 
 ;;;; Need a way to ensure that upload data is not run in parallel on the same dataset ;;;;
 
-(defn upload-data-message [db dataset data-message & {:keys [validate? release? release-description] :or {validate? true release? false}}]
+(defn upload-data-message [db data-message {agencyid :agency-id id :resource-id version :version} {:keys [validate? release? release-description] :or {validate? true release? false}}]
   "Usage: (upload-data-message db dimensions dataflow & {:keys [validate?] :or {validate? true}})
 
   Validate and upload a data message. Duplicate series in the data message will be ignored.
-  
+
   If release? evaluates to 'true' the upload is considered to be the final version of the data preceding the next release. 
   A description of the data release may be provided"
-  (let [{agencyid :agencyid id :id version :version} dataset]
-    (if validate? (validate-data (str (:sdmx-registry env) "schema/dataflow/" agencyid  "/" id "/" version "?format=sdmx-2.0") data-message))
-    (let [data-zipper (-> data-message xml/parse-str zip/xml-zip)
+  (with-open [data-message (clojure.java.io/input-stream data-message)]
+    (if validate? (validate-data (str (:sdmx-registry env) "/sdmxapi/rest/schema/dataflow/" agencyid  "/" id "/" version "?format=sdmx-2.0") data-message)))
+  (with-open [data-message (clojure.java.io/input-stream data-message)] 
+    (let [data-zipper (-> data-message xml/parse zip/xml-zip)
           components (get-components agencyid id version)
           ns1  (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")
-          dataset-id (upload-dataset db dataset (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
+          dataset-id (upload-dataset db {:agencyid agencyid :id id :version version} (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
           previous-release (get (or (get-latest-release db dataset-id)
                                     (insert-release db (merge {:embargo (java-time/sql-timestamp "0001-01-01T00:00:00") 
                                                                :description "Initial release"} 
@@ -70,16 +71,18 @@
       nil)))
 
 (defn validate-data [schema data-message]
-  (with-open [message (clojure.java.io/input-stream  "resources\\sdmx\\v2_0\\SDMXMessage.xsd")
-              data (clojure.java.io/reader (char-array data-message))]
+  (with-open [message-schema (clojure.java.io/input-stream  "resources\\sdmx\\v2_0\\SDMXMessage.xsd")
+              data-message (if (string? data-message) 
+                             (clojure.java.io/reader (char-array data-message))
+                             (clojure.java.io/input-stream data-message))]
     (-> XMLConstants/W3C_XML_SCHEMA_NS_URI
         (SchemaFactory/newInstance)
-        (.newSchema (into-array [(StreamSource. message) (StreamSource. schema)]))
+        (.newSchema (into-array [(StreamSource. message-schema) (StreamSource. schema)]))
         (.newValidator)
-        (.validate (StreamSource. data)))))
+        (.validate (StreamSource. data-message)))))
 
 (defn get-components [agencyid id version]
-  (let [components-zipper (-> (slurp (str (:sdmx-registry env) "datastructure/" agencyid  "/" id "/" version "?format=sdmx-2.0")) 
+  (let [components-zipper (-> (slurp (str (:sdmx-registry env) "/sdmxapi/rest/datastructure/" agencyid  "/" id "/" version "?format=sdmx-2.0")) 
                               xml/parse-str 
                               zip/xml-zip
                               (zip-xml/xml1-> ::messg/KeyFamilies ::struc/KeyFamily ::struc/Components))
