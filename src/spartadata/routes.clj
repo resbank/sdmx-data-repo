@@ -12,7 +12,7 @@
             [reitit.ring.middleware.dev :as dev]
             [reitit.ring.spec :as spec]
             [spec-tools.spell :as spell]
-            [spartadata.handlers.sdmx :as sdmx]
+            [spartadata.handlers.sdmxapi :as sdmx]
             [muuntaja.core :as m]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
