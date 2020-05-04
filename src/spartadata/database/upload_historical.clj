@@ -24,7 +24,7 @@
 
 (declare upload-historical-obs)
 
-(defn upload-historical-data-message [db data-message {agencyid :agency-id id :resource-id version :version} {:keys [validate? next-release release-description] :or {validate? true}}]
+(defn upload-historical-data-message [db data-message {agencyid :agency-id id :resource-id version :version} {:keys [validate? nextRelease releaseDescription] :or {validate? true}}]
   "Usage: (upload-data-message db dimensions dataflow & {:keys [validate?] :or {validate? true}})
 
   Validate and upload a data message. Duplicate series in the data message will be ignored.
@@ -37,7 +37,7 @@
     (let [data-zipper (-> data-message xml/parse zip/xml-zip)
           components (get-components agencyid id version)
           ns1  (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")
-          next-release (java-time/local-date-time next-release)
+          next-release (java-time/local-date-time nextRelease)
           dataset-id (upload-dataset db {:agencyid agencyid :id id :version version} (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
           previous-release (get (or (get-latest-release db dataset-id)
                                     (insert-release db (merge {:embargo (java-time/sql-timestamp "0001-01-01T00:00:00") 
@@ -60,7 +60,7 @@
                   (future (upload-historical-obs db series-id (:obs components) (zip-xml/xml-> series-zipper (xml/qname ns1 "Obs")) previous-release next-release)))
                 (recur (next series-zippers) (conj series-uploaded series-id)))))
           (insert-release db (merge {:embargo (java-time/sql-timestamp next-release) 
-                                     :description (str release-description)} 
+                                     :description (str releaseDescription)} 
                                     dataset-id))
           nil)))))
 
