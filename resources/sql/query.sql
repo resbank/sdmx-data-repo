@@ -114,22 +114,26 @@ WHERE series_id=:series_id;
 -- :result :many
 -- :doc Return observation.
 SELECT
-  observation_id,
-  time_period,
-  obs_value
+  observation.time_period::TEXT,
+  observation.obs_value,
+  array_agg(observation_attribute.attr) AS attrs,
+  array_agg(observation_attribute.val) AS vals
 FROM observation
-WHERE series_id=:series_id
-AND valid=true
-ORDER BY time_period;
+INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
+WHERE observation.series_id=:series_id
+AND observation.valid=true
+GROUP BY observation.observation_id, observation.time_period, observation.obs_value
+ORDER BY observation.time_period;
 
 -- :name get-obs-by-release
 -- :command :query
 -- :result :many
 -- :doc Return observation.
 SELECT  
-  observation.observation_id,
-  observation.time_period,
-  observation.obs_value
+  observation.time_period::TEXT,
+  observation.obs_value,
+  array_agg(observation_attribute.attr) AS attrs,
+  array_agg(observation_attribute.val) AS vals
 FROM observation 
 INNER JOIN (
   SELECT 
@@ -141,9 +145,11 @@ INNER JOIN (
   AND created <= :release::TIMESTAMP 
   GROUP BY time_period, series_id 
 ) 
-AS release ON release.last_created=observation.created 
-  AND release.time_period=observation.time_period 
-  AND release.series_id=observation.series_id 
+AS release_tmp ON release_tmp.last_created=observation.created 
+  AND release_tmp.time_period=observation.time_period 
+  AND release_tmp.series_id=observation.series_id 
+INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
+GROUP BY observation.time_period, observation.obs_value
 ORDER BY observation.time_period;
 
 
