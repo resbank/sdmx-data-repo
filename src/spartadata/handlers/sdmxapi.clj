@@ -1,4 +1,4 @@
-(ns spartadata.handlers.sdmx
+(ns spartadata.handlers.sdmxapi
   (:require [clojure.data.xml :as xml]
             [environ.core :refer [env]]
             [spartadata.database.retrieve :refer [retrieve-data-message]]
