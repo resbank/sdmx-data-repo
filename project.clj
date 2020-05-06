@@ -1,6 +1,6 @@
-(defproject spartadata "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+(defproject spartadata "0.1.0"
+  :description "SpartaData: SDMX compliant data repository for ERD"
+  :url "http://tst06350.resbank.co.za/Sparta/spartadata"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[clojure.java-time "0.3.2"]
@@ -29,5 +29,6 @@
                            :source-paths ["dev"]}
              :profiles/dev {}
              :uberjar {:aot :all}}
+  :uberjar-name "spartadata.jar"
   :aliases {"init"  ["run" "-m" "spartadata.database.initialise/init"]
             "rollback"  ["run" "-m" "spartadata.database.uninitialise/rollback"]})

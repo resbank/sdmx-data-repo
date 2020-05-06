@@ -20,7 +20,7 @@
 
 
 (defn init []
-  (let [db {:datasource (make-datasource {:jdbc-url (:db env)})}]
+  (let [db {:datasource (make-datasource {:jdbc-url (:sdmx-postgres env)})}]
     (jdbc/with-db-transaction [tx db]
       (create-dataset-table tx)
       (create-dataset-attr-table tx)

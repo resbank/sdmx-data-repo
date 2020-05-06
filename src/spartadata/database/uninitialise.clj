@@ -19,7 +19,7 @@
 ;; Initialise and rollback database
 
 (defn rollback []
-  (let [db {:datasource (make-datasource {:jdbc-url (:db env)})}]
+  (let [db {:datasource (make-datasource {:jdbc-url (:sdmx-postgres env)})}]
     (jdbc/with-db-transaction [tx db]
       (drop-array-idx tx)
       (drop-living-idx tx)

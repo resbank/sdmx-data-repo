@@ -36,7 +36,7 @@ to your `ns` form.
 Run the following command
 
 ```
-prunsrv //IS//SPARTADATA --DisplayName="SpartaData App" --Description="Web application and data repository for the Sparta Project." --Classpath C:\spartadata\target\spartadata.jar --StartMode jvm --StartClass spartadata.application --StartMethod start --StopMode  jvm --StopClass spartadata.application --StopMethod  stop --Startup=auto  --LogLevel=DEBUG --LogPath=C:\spartadata\log --LogPrefix=commons-daemon --StdOutput=C:\spartadata\log\stdout.log --StdError=C:\spartadata\log\stderr.log
+prunsrv //IS//SPARTADATA --DisplayName="SpartaData App" --Description="Web application and data repository for the Sparta Project." --Classpath C:\spartadata\target\uberjar\spartadata.jar --StartMode jvm --StartClass spartadata.application --StartMethod start --StopMode  jvm --StopClass spartadata.application --StopMethod  stop --Startup=auto  --LogLevel=DEBUG --LogPath=C:\spartadata\log --LogPrefix=commons-daemon --StdOutput=C:\spartadata\log\stdout.log --StdError=C:\spartadata\log\stderr.log
 ```
 
 To run the service as the `spartapp` user go to *Control Panel > System and Security > Administrative Tools > Services*, scroll to `Sparta App` and double click to open. Once open, go to the *Log On* tab and select *This account* and input `spartapp@resbank.co.za` and provide the account's password. Next, go to the *General* tab and start the application.

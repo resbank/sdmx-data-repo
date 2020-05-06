@@ -23,7 +23,7 @@
   (router connection-pool))
 
 (defmethod ig/init-key :system/connection-pool [_ _]
-  (make-datasource {:jdbc-url (:db env)}))
+  (make-datasource {:jdbc-url (:sdmx-postgres env)}))
 
 (defmethod ig/halt-key! :system/connection-pool [_ cp]
   (close-datasource cp))
