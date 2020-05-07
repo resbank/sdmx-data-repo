@@ -79,6 +79,30 @@ SELECT series_id
 FROM series 
 WHERE dataset_id=:dataset_id;
 
+-- :name get-series
+-- :command :query
+-- :result :many
+-- :doc Return observation.
+SELECT
+  series_dimension_tmp.series_id,
+  series_dimension_tmp.dims,
+  series_dimension_tmp.dim_vals,
+  array_agg(series_attribute.attr) AS attrs,
+  array_agg(series_attribute.val) AS attr_vals
+FROM (
+  SELECT
+    series.series_id,
+    array_agg(dimension.dim) AS dims,
+    array_agg(dimension.val) AS dim_vals
+  FROM series
+  INNER JOIN series_dimension ON series_dimension.series_id=series.series_id
+  INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
+  WHERE series.dataset_id=:dataset_id
+  GROUP BY series.series_id
+) AS series_dimension_tmp
+LEFT JOIN series_attribute ON series_attribute.series_id=series_dimension_tmp.series_id
+GROUP BY series_dimension_tmp.series_id, series_dimension_tmp.dims, series_dimension_tmp.dim_vals;
+
 -- :name get-series-dims
 -- :command :query
 -- :result :many
@@ -97,7 +121,32 @@ WHERE series.series_id=:series_id;
 -- :doc Return the series IDs that are referenced by  the given dimension IDs
 SELECT series_id
 FROM series_dimension
-WHERE dimension_id IN (:v*:dims)
+WHERE dimension_id IN (:v*:dimension_ids)
+
+-- :name get-series-from-ids
+-- :command :query
+-- :result :many
+-- :doc Return the series IDs that are referenced by  the given dimension IDs
+SELECT
+  series_dimension_tmp.series_id,
+  series_dimension_tmp.dims,
+  series_dimension_tmp.dim_vals,
+  array_agg(series_attribute.attr) AS attrs,
+  array_agg(series_attribute.val) AS attr_vals
+FROM (
+  SELECT
+    series.series_id,
+    array_agg(dimension.dim) AS dims,
+    array_agg(dimension.val) AS dim_vals
+  FROM series
+  INNER JOIN series_dimension ON series_dimension.series_id=series.series_id
+  INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
+  WHERE series.series_id IN (:v*:series_ids)
+  GROUP BY series.series_id
+) AS series_dimension_tmp
+LEFT JOIN series_attribute ON series_attribute.series_id=series_dimension_tmp.series_id
+GROUP BY series_dimension_tmp.series_id, series_dimension_tmp.dims, series_dimension_tmp.dim_vals;
+
 
 -- :name get-series-attrs
 -- :command :query

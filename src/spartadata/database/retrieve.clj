@@ -110,7 +110,7 @@
         :when dataset-id]
     (let [dataset-attrs (get-dataset-attrs db dataset-id)]
       (merge (zipmap (map (comp keyword :attr) dataset-attrs) (map :val dataset-attrs))
-             {:Series (json-series db ns1 dataset-id dimensions options)}))))
+             (json-series db ns1 dataset-id dimensions options)))))
 
 (defn json-series [db ns1 dataset-id dimensions options]
   (let [dimension-id-sets (if (not= "all" dimensions) 
@@ -120,28 +120,29 @@
                                    (if (empty? (first values))
                                      (get-dim-ids-by-pos db (assoc dataset-id :pos pos))
                                      (get-dim-ids-by-vals db (merge dataset-id {:vals values :pos pos}))))))]
-    (for [series-id (if (= "all" dimensions) 
-                      (map :series_id (get-series-ids db dataset-id))
-                      (if (every? (comp not empty?) dimension-id-sets)
-                        (reduce #(clojure.set/intersection %1 %2) 
-                                (pmap #(into #{} (->> (get-series-ids-from-dim-ids db {:dims %})
-                                                      (map vals)
-                                                      (reduce concat))) 
-                                      dimension-id-sets))))
-          :let [series-dims (get-series-dims db {:series_id series-id})
-                series-attrs (get-series-attrs db {:series_id series-id})]]
-      (merge (zipmap (map (comp keyword :dim) series-dims) (map :val series-dims))
-             (zipmap (map (comp keyword :attr) series-attrs) (map :val series-attrs))
-             {:Obs (json-observations db ns1 series-id options)}))))
+    {:Series (pmap (fn [{series-id :series_id dims :dims dim-values :dim_vals attrs :attrs attr-values :attr_vals}] 
+                     (merge (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray attr-values))) {})
+                            (zipmap (mapv keyword (.getArray dims)) (into [] (.getArray dim-values)))
+                            (json-observations db ns1 series-id options)))
+                   (if (= "all" dimensions) 
+                     (get-series db dataset-id)
+                     (if (every? (comp not empty?) dimension-id-sets)
+                       (->> (reduce #(clojure.set/intersection %1 %2) 
+                                    (map #(into #{} (->> (get-series-ids-from-dim-ids db {:dimension_ids %})
+                                                         (map vals)
+                                                         (reduce concat))) 
+                                         dimension-id-sets))
+                            (hash-map :series_ids)
+                            (get-series-from-ids db)))))}))
 
 (defn json-observations [db ns1 series-id {release :release}]
-  (map (fn [{time-period :time_period obs-value :obs_value attrs :attrs values :vals}] 
-         (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
-             (assoc :TIME_PERIOD time-period) 
-             (assoc :OBS_VALUE obs-value))) 
-       (if release  
-         (get-obs-by-release db {:release (java-time/sql-timestamp release) :series_id series-id})
-         (get-obs db {:series_id series-id}))))
+  {:Obs (map (fn [{time-period :time_period obs-value :obs_value attrs :attrs values :vals}] 
+               (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
+                   (assoc :TIME_PERIOD time-period) 
+                   (assoc :OBS_VALUE obs-value))) 
+             (if release  
+               (get-obs-by-release db {:release (java-time/sql-timestamp release) :series_id series-id})
+               (get-obs db {:series_id series-id})))})
 
 
 
@@ -217,21 +218,22 @@
                                    (if (empty? (first values))
                                      (get-dim-ids-by-pos db (assoc dataset-id :pos pos))
                                      (get-dim-ids-by-vals db (merge dataset-id {:vals values :pos pos}))))))]
-    (for [series-id (if (= "all" dimensions) 
-                      (map :series_id (get-series-ids db dataset-id))
-                      (if (every? (comp not empty?) dimension-id-sets)
-                        (reduce #(clojure.set/intersection %1 %2) 
-                                (pmap #(into #{} (->> (get-series-ids-from-dim-ids db {:dims %})
-                                                      (map vals)
-                                                      (reduce concat))) 
-                                      dimension-id-sets))))
-          :let [series-dims (get-series-dims db {:series_id series-id})
-                series-attrs (get-series-attrs db {:series_id series-id})]]
-      (apply xml/element 
-             (concat [(xml/qname ns1 "Series") 
-                      (merge (zipmap (map (comp keyword :dim) series-dims) (map :val series-dims))
-                             (zipmap (map (comp keyword :attr) series-attrs) (map :val series-attrs)))]
-                     (sdmx-v2-0-observations db ns1 series-id options))))))
+    (pmap (fn [{series-id :series_id dims :dims dim-values :dim_vals attrs :attrs attr-values :attr_vals}] 
+            (apply xml/element 
+                   (concat [(xml/qname ns1 "Series") 
+                            (merge (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray attr-values))) {})
+                                   (zipmap (mapv keyword (.getArray dims)) (into [] (.getArray dim-values))))]
+                           (sdmx-v2-0-observations db ns1 series-id options))))
+          (if (= "all" dimensions) 
+            (get-series db dataset-id)
+            (if (every? (comp not empty?) dimension-id-sets)
+              (->> (reduce #(clojure.set/intersection %1 %2) 
+                           (map #(into #{} (->> (get-series-ids-from-dim-ids db {:dimension_ids %})
+                                                (map vals)
+                                                (reduce concat))) 
+                                dimension-id-sets))
+                   (hash-map :series_ids)
+                   (get-series-from-ids db)))))))
 
 (defn sdmx-v2-0-observations [db ns1 series-id {release :release}]
   (map (fn [{time-period :time_period obs-value :obs_value attrs :attrs values :vals}] 
