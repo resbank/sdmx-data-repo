@@ -1,14 +1,26 @@
--- :name create-living-idx
+-- :name create-valid-idx
 -- :command :execute
 -- :result :raw
--- :doc Create a partial index on the :lifetime of all 'living' observations.
-CREATE INDEX IF NOT EXISTS living_idx ON observation (valid) WHERE valid=true;
+-- :doc Create a partial index on the :valid flag on all "valid" observations.
+CREATE INDEX IF NOT EXISTS valid_idx ON observation (valid, series_id) WHERE valid=true;
 
--- :name drop-living-idx
+-- :name drop-valid-idx
 -- :command :execute
 -- :result :raw
--- :doc Drop living_idx.
-DROP INDEX IF EXISTS living_idx;
+-- :doc Drop valid_idx.
+DROP INDEX IF EXISTS valid_idx;
+
+-- :name create-obs-idx
+-- :command :execute
+-- :result :raw
+-- :doc Create a multi-column index on the observaiton table.
+CREATE INDEX IF NOT EXISTS obs_idx ON observation (created, series_id);
+
+-- :name drop-obs-idx
+-- :command :execute
+-- :result :raw
+-- :doc Drop obs_idx.
+DROP INDEX IF EXISTS obs_idx;
 
 -- :name create-array-idx
 -- :command :execute
