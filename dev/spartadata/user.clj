@@ -1,4 +1,4 @@
-(ns spartadata.user
+(ns user
   (:require [environ.core :refer [env]]
             [hikari-cp.core :refer [make-datasource close-datasource]]
             [integrant.core :as ig]
@@ -23,7 +23,6 @@
 
 (defmethod ig/halt-key! :system/connection-pool [_ cp]
   (close-datasource cp))
-
 
 (ig-repl/set-prep! (constantly system-config))
 

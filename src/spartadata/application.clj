@@ -1,29 +1,23 @@
 (ns spartadata.application
-  (:gen-class
-    :methods [^:static [start ["[Ljava.lang.String;"] void]
-              ^:static [stop ["[Ljava.lang.String;"] void]]
-    :main false)
   (:require [environ.core :refer [env]]
             [hikari-cp.core :refer [make-datasource close-datasource]]
             [integrant.core :as ig]
-            [reitit.ring :as ring]
-            [ring.adapter.jetty :as jetty]
-            [spartadata.routes :refer [router]]))
+            [spartadata.routes :as reitit])
+  (:import [javax.naming InitialContext]))
 
-(def system-config (ig/read-string (slurp "resources/config.edn")))
+(def system-config (ig/read-string (slurp (clojure.java.io/resource "config.edn"))))
 
-(defmethod ig/init-key :system/jetty [_ {:keys [port join? handler]}]
-  (println "server running on port: " port)
-  (jetty/run-jetty handler {:port port :join? join?}))
+(def ring-handler (atom nil))
 
-(defmethod ig/halt-key! :system/jetty [_ server]
-  (.stop server))
+(defn handler [router] 
+  (@ring-handler router))
 
 (defmethod ig/init-key :system/handler [_ {connection-pool :cp}]
-  (router connection-pool))
+  (reset! ring-handler (reitit/handler connection-pool))
+  @ring-handler)
 
 (defmethod ig/init-key :system/connection-pool [_ _]
-  (make-datasource {:jdbc-url (:sdmx-postgres env)}))
+  (make-datasource {:datasource (.lookup (InitialContext.) "java:/comp/env/jdbc/SpartaData")}))
 
 (defmethod ig/halt-key! :system/connection-pool [_ cp]
   (close-datasource cp))
@@ -33,7 +27,3 @@
 
 (defn stop []
   (alter-var-root #'system-config ig/halt!))
-
-(defn -start [args] (start))
-
-(defn -stop [args] (stop))

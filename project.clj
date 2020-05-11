@@ -17,18 +17,23 @@
                  [org.clojure/java.jdbc "0.7.10"]
                  [org.clojure/tools.logging "1.0.0"]
                  [org.postgresql/postgresql "42.2.6"]
-                 [org.slf4j/slf4j-simple "1.7.21"]
-                 [ring/ring-jetty-adapter "1.8.0"]]
+                 [org.slf4j/slf4j-simple "1.7.21"]]
   :repl-options {:init-ns user}
   :main ^:skip-aot spartadata.application
-  :plugins [[lein-environ "1.1.0"]]
+  :plugins [[lein-environ "1.1.0"]
+            [lein-ring "0.12.5"]]
+  :ring {:handler spartadata.application/handler
+         :init spartadata.application/start
+         :destroy spartadata.application/stop}
   :target-path "target/%s"
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
   :profiles {:dev [:project/dev :profiles/dev]
-             :project/dev {:dependencies [[integrant/repl "0.3.1"]] 
-                           :source-paths ["dev"]}
+             :project/dev {:dependencies [[ring/ring-jetty-adapter "1.8.0"]
+                                          [integrant/repl "0.3.1"]] 
+                           :source-paths ["dev/spartadata"]
+                           :resource-paths ["dev/resources"]}
              :profiles/dev {}
+             :test {:resource-paths ["test/resources"]}
              :uberjar {:aot :all}}
-  :uberjar-name "spartadata.jar"
-  :aliases {"init"  ["run" "-m" "spartadata.database.initialise/init"]
-            "rollback"  ["run" "-m" "spartadata.database.uninitialise/rollback"]})
+  :aliases {"initialise"  ["run" "-m" "spartadata.database.initialise/initialise"]
+            "destroy"  ["run" "-m" "spartadata.database.destroy/destroy"]})
