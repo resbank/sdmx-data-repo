@@ -72,12 +72,35 @@
 
 (defn validate-data [schema data-message]
   (with-open [message-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXMessage.xsd"))
+              structure-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXStructure.xsd"))
+              generic-data-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXGenericData.xsd"))
+              utility-data-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXUtilityData.xsd"))
+              compact-data-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXCompactData.xsd"))
+              cross-sectional-data-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXCrossSectionalData.xsd"))
+              query-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXQuery.xsd"))
+              common-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXCommon.xsd"))
+              registry-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXRegistry.xsd"))
+              generic-metadata-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXGenericMetadata.xsd"))
+              metadata-report-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/SDMXMetadataReport.xsd"))
+              xml-schema (clojure.java.io/input-stream  (clojure.java.io/resource "sdmx/v2_0/xml.xsd"))
               data-message (if (string? data-message) 
                              (clojure.java.io/reader (char-array data-message))
                              (clojure.java.io/input-stream data-message))]
     (-> XMLConstants/W3C_XML_SCHEMA_NS_URI
         (SchemaFactory/newInstance)
-        (.newSchema (into-array [(StreamSource. message-schema) (StreamSource. schema)]))
+        (.newSchema (into-array [(StreamSource. xml-schema)
+                                 (StreamSource. common-schema)
+                                 (StreamSource. structure-schema)
+                                 (StreamSource. query-schema)
+                                 (StreamSource. registry-schema)
+                                 (StreamSource. generic-metadata-schema)
+                                 (StreamSource. metadata-report-schema)
+                                 (StreamSource. cross-sectional-data-schema)
+                                 (StreamSource. compact-data-schema)
+                                 (StreamSource. generic-data-schema)
+                                 (StreamSource. utility-data-schema)
+                                 (StreamSource. message-schema)
+                                 (StreamSource. schema)]))
         (.newValidator)
         (.validate (StreamSource. data-message)))))
 
@@ -133,127 +156,6 @@
                                             :val (val attribute)}
                                            series-id)))
       series-id)))
-
-(comment
-  (defn- upload-obs [db series-id components obs-zippers previous-release timestamp]
-    (jdbc/with-db-transaction [tx db]
-      (doseq [obs-zipper obs-zippers
-              :let [attributes  (:attrs (zip/node obs-zipper))
-                    time-period (java-time/sql-date (:TIME_PERIOD attributes))
-                    obs-value (Double/parseDouble (:OBS_VALUE attributes))
-                    obs-id (if-let [obs (get-live-obs tx (merge series-id {:time_period time-period}))]
-                             (if (> (Math/abs (- obs-value (:obs_value obs))) (Math/ulp (:obs_value obs)))
-                               (if (:antecedent (created-previous-to? tx (assoc obs :release previous-release)))
-                                 (do (kill-obs tx obs)
-                                     (insert-obs tx (merge {:created timestamp
-                                                            :time_period time-period
-                                                            :obs_value obs-value}
-                                                           series-id)))
-                                 (update-obs tx (assoc obs :obs_value obs-value)))
-                               obs)
-                             (insert-obs tx (merge {:created timestamp
-                                                    :time_period time-period
-                                                    :obs_value obs-value}
-                                                   series-id)))]]
-        (doseq [attribute attributes
-                :when (contains? (:attributes components) (name (key attribute)))]
-          (upsert-obs-attribute tx (merge {:attr (name (key attribute))
-                                           :val (val attribute)}
-                                          obs-id)))))))
-
-(comment
-(defn- upload-obs [db series-id components obs-zippers previous-release timestamp]
-  (jdbc/with-db-transaction [tx db]
-    (let [observations (get-live-obs2 tx series-id)
-          indexed-observations (zipmap (map :time_period observations) observations)]
-      (doseq [obs-zipper obs-zippers
-              :let [attributes  (:attrs (zip/node obs-zipper))
-                    time-period (:TIME_PERIOD attributes)
-                    obs-value (Double/parseDouble (:OBS_VALUE attributes))
-                    obs-id (if-let [obs (get indexed-observations time-period)]
-                             (if (> (Math/abs (- obs-value (:obs_value obs))) (Math/ulp (:obs_value obs)))
-                               (if (java-time/before? (java-time/local-date-time (:created obs)) 
-                                                      (java-time/local-date-time previous-release))
-                                 (do (kill-obs tx obs)
-                                     (insert-obs2 tx (merge {:created timestamp
-                                                            :time_period time-period
-                                                            :obs_value obs-value}
-                                                           series-id)))
-                                 (update-obs tx (assoc obs :obs_value obs-value)))
-                               obs)
-                             (insert-obs2 tx (merge {:created timestamp
-                                                    :time_period time-period
-                                                    :obs_value obs-value}
-                                                   series-id)))]]
-        (doseq [attribute attributes
-                :when (contains? (:attributes components) (name (key attribute)))]
-          (upsert-obs-attribute tx (merge {:attr (name (key attribute))
-                                           :val (val attribute)}
-                                          obs-id))))))))
-(comment
-(defn- upload-obs [db series-id components obs-zippers previous-release timestamp]
-  (jdbc/with-db-transaction [tx db]
-    (let [attrs (map (comp :attrs zip/node) obs-zippers)
-          time-periods (map :TIME_PERIOD attrs)
-          candidate-obs (zipmap time-periods attrs)
-          current-obs (#(select-keys (zipmap (map :time_period %) %) time-periods) (get-live-obs2 tx series-id))]
-      (doseq [obs (-> (fn [obs time-period {obs-value :OBS_VALUE}] 
-                        (let [candidate {:created timestamp
-                                         :valid true
-                                         :time_period time-period
-                                         :obs_value (Double/parseDouble obs-value)
-                                         :series_id (:series_id series-id)}]
-                          (if-let [current (get obs time-period)]
-                            (if (> (Math/abs (- (:obs_value candidate) (:obs_value current))) (Math/ulp (:obs_value current)))
-                              (if (java-time/before? (:created current) previous-release)
-                                (do (assoc-in obs [time-period :valid] false)
-                                    (assoc obs (clojure.string/upper-case time-period) candidate))
-                                (assoc-in obs [time-period :obs_value] (:obs_value candidate)))
-                              (dissoc obs time-period))
-                            (assoc obs time-period candidate))))
-                      (reduce-kv current-obs candidate-obs)
-                      vals
-                      (partial map #(insert-obs3 tx %))
-                      doall)
-              :let [attributes (for [attribute (get candidate-obs (:time-period obs))
-                                     :when (contains? (:attributes components) (name (key attribute)))]
-                                 (merge {:attr (name (key attribute)) 
-                                         :val (val attribute)}
-                                        obs))]
-              :when (not (empty? attributes))]
-        (upsert-obs-attributes tx {:attrs attributes}))))))
-
-(comment
-(defn- upload-obs [db series-id components obs-zippers previous-release timestamp]
-  (let [attrs (map (comp :attrs zip/node) obs-zippers)
-        time-periods (map :TIME_PERIOD attrs)
-        candidate-obs (zipmap time-periods attrs)]
-    (jdbc/with-db-transaction [tx db]
-      (let [current-obs (#(select-keys (zipmap (map :time_period %) %) time-periods) (get-live-obs2 tx series-id))]
-      (doseq [obs (-> (fn [obs time-period {obs-value :OBS_VALUE}] 
-                        (let [candidate {:created timestamp
-                                         :valid true
-                                         :time_period time-period
-                                         :obs_value (Double/parseDouble obs-value)
-                                         :series_id (:series_id series-id)}]
-                          (if-let [current (get obs time-period)]
-                            (if (> (Math/abs (- (:obs_value candidate) (:obs_value current))) (Math/ulp (:obs_value current)))
-                              (if (java-time/before? (java-time/local-date-time (:created current)) (java-time/local-date-time previous-release))
-                                (-> obs
-                                    (assoc-in [time-period :valid] false)
-                                    (assoc (str time-period "-new") candidate))
-                                (assoc-in obs [time-period :obs_value] (:obs_value candidate)))
-                              (dissoc obs time-period))
-                            (assoc obs time-period candidate))))
-                      (reduce-kv current-obs candidate-obs)
-                      vals)]
-        (insert-obs3 tx obs))))
-    (jdbc/with-db-transaction [tx db]
-      (doseq [obs (get-live-obs3 tx (assoc series-id :time_periods (map java-time/local-date time-periods)))
-              :let [time-period (:time_period obs)]]
-        (upsert-obs-attributes tx {:attrs (for [attribute (get candidate-obs time-period)
-                                                :when (contains? (:attributes components) (name (key attribute)))]
-                                            [(name (key attribute)) (val attribute) (:observation_id obs)])}))))))
 
 (defn- upload-obs [db series-id components obs-zippers previous-release timestamp]
   (jdbc/with-db-transaction [tx db]
