@@ -215,6 +215,36 @@ WHERE series_id = :series_id
 AND time_period = :time_period 
 AND valid=true;
 
+-- :name get-live-obs2
+-- :command :query
+-- :result :many
+-- :doc Return the 'live' observation for a given series and time period.
+SELECT 
+  created,
+  valid,
+  time_period::TEXT, 
+  obs_value, 
+  series_id
+FROM observation 
+WHERE series_id = :series_id 
+AND valid=true;
+
+-- :name get-live-obs3
+-- :command :query
+-- :result :many
+-- :doc Return the 'live' observation for a given series and time period.
+SELECT 
+  observation_id,
+  created,
+  valid,
+  time_period::TEXT, 
+  obs_value, 
+  series_id
+FROM observation 
+WHERE series_id = :series_id 
+AND time_period IN (:v*:time_periods)
+AND valid=true;
+
 -- :name created-previous-to?
 -- :command :query
 -- :result :one

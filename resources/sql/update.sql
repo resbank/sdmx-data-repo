@@ -91,11 +91,71 @@ VALUES (
 )
 RETURNING observation_id;
 
+-- :name insert-obs2
+-- :command :query
+-- :result :one
+-- :doc Insert a new observation record. Will not throw an error if there is currently a 'live' observation for the given series and time period.
+INSERT INTO observation (
+  created,
+  time_period, 
+  obs_value,
+  series_id 
+)
+VALUES (
+  :created,
+  :time_period::TIMESTAMP,
+  :obs_value,
+  :series_id
+)
+RETURNING observation_id;
+
+-- :name insert-obs3
+-- :command :query
+-- :result :one
+-- :doc Insert a new observation record. Will not throw an error if there is currently a 'live' observation for the given series and time period.
+INSERT INTO observation (
+  created,
+  valid,
+  time_period, 
+  obs_value,
+  series_id 
+)
+VALUES (
+  :created,
+  :valid,
+  :time_period::TIMESTAMP,
+  :obs_value,
+  :series_id
+)
+ON CONFLICT ON CONSTRAINT observation_series_id_time_period_created_key
+DO UPDATE SET 
+  created = :created,
+  valid = :valid,
+  time_period = :time_period::TIMESTAMP,
+  obs_value = :obs_value,
+  series_id = :series_id
+RETURNING observation_id;
+
 -- :name upsert-obs-attribute
--- :command execute
+-- :command :execute
 -- :result :affected
 -- :doc Insert attribute, update :val on conflict.
 INSERT INTO observation_attribute (attr, val, observation_id)
 VALUES (:attr, :val, :observation_id)
 ON CONFLICT ON CONSTRAINT observation_attribute_attr_val_observation_id_key
 DO UPDATE SET val = :val;
+
+-- :name upsert-obs-attributes
+-- :command :execute
+-- :result :affected
+-- :doc Insert attribute, update :val on conflict.
+INSERT INTO observation_attribute (attr, val, observation_id)
+VALUES :t*:attrs
+ON CONFLICT ON CONSTRAINT observation_attribute_attr_val_observation_id_key
+DO UPDATE SET val = excluded.val;
+
+-- :name insert-table
+-- :command :execute
+-- :result :affected
+-- :doc Insert a new observation record. Will not throw an error if there is currently a 'live' observation for the given series and time period.
+select * into test from observation where series_id=:series_id;
