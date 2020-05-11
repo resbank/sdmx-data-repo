@@ -1,7 +1,6 @@
 (ns spartadata.database.initialise
   (:require [clojure.java.jdbc :as jdbc]
             [environ.core :refer [env]]
-            [hikari-cp.core :refer [make-datasource close-datasource]]
             [hugsql.core :as sql]))
 
 
@@ -19,8 +18,8 @@
 ;; Initialise and rollback database
 
 
-(defn init []
-  (let [db {:datasource (make-datasource {:jdbc-url (:sdmx-postgres env)})}]
+(defn initialise []
+  (let [db {:connection-uri (:sdmx-postgres env)}]
     (jdbc/with-db-transaction [tx db]
       (create-dataset-table tx)
       (create-dataset-attr-table tx)
@@ -31,6 +30,6 @@
       (create-series-attr-table tx)
       (create-observation-table tx)
       (create-observation-attr-table tx)
-      (create-living-idx tx)
-      (create-array-idx tx))
-    (close-datasource (:datasource db))))
+      (create-valid-idx tx)
+      (create-obs-idx tx)
+      (create-array-idx tx))))

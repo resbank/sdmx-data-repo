@@ -1,4 +1,4 @@
-(ns spartadata.database.uninitialise
+(ns spartadata.database.destroy
   (:require [clojure.java.jdbc :as jdbc]
             [environ.core :refer [env]]
             [hikari-cp.core :refer [make-datasource close-datasource]]
@@ -18,11 +18,12 @@
 
 ;; Initialise and rollback database
 
-(defn rollback []
-  (let [db {:datasource (make-datasource {:jdbc-url (:sdmx-postgres env)})}]
+(defn destroy []
+  (let [db {:connection-uri (:sdmx-postgres env)}]
     (jdbc/with-db-transaction [tx db]
       (drop-array-idx tx)
-      (drop-living-idx tx)
+      (drop-obs-idx tx)
+      (drop-valid-idx tx)
       (drop-observation-attr-table tx)
       (drop-observation-table tx)
       (drop-series-attr-table tx)
@@ -31,5 +32,4 @@
       (drop-dimension-table tx)
       (drop-release-table tx)
       (drop-dataset-attr-table tx)
-      (drop-dataset-table tx))
-    (close-datasource (:datasource db))))
+      (drop-dataset-table tx))))
