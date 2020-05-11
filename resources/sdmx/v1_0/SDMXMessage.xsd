@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- edited with XMLSpy v2008 rel. 2 sp2 (http://www.altova.com) by Matt Nelson (Metadata Technology) -->
-<!-- Copyright SDMX 2005  -   www.sdmx.org -->
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message" xmlns:message="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message" xmlns:structure="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/structure" xmlns:generic="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic" xmlns:utility="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/utility" xmlns:compact="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/compact" xmlns:cross="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/cross" xmlns:query="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/query" xmlns:common="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/common" xmlns:registry="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/registry" xmlns:genericmetadata="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/genericmetadata" xmlns:metadatareport="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/metadatareport" xmlns:xml="http://www.w3.org/XML/1998/namespace" targetNamespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message" elementFormDefault="qualified">
-  <xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/structure" schemaLocation="SDMXStructure.xsd"/>
-  <xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/generic" schemaLocation="SDMXGenericData.xsd"/>
-  <xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/utility" schemaLocation="SDMXUtilityData.xsd"/>
-	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/compact" schemaLocation="SDMXCompactData.xsd"/>
-	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/cross" schemaLocation="SDMXCrossSectionalData.xsd"/>
-	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/query" schemaLocation="SDMXQuery.xsd"/>
-	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/common" schemaLocation="SDMXCommon.xsd"/>
-	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/registry" schemaLocation="SDMXRegistry.xsd"/>
-	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/genericmetadata" schemaLocation="SDMXGenericMetadata.xsd"/>
-	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v2_0/metadatareport" schemaLocation="SDMXMetadataReport.xsd"/>
+<!-- Copyright SDMX 2004  -   www.sdmx.org -->
+<xs:schema targetNamespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/message" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/message" xmlns:message="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/message" xmlns:structure="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/structure" xmlns:generic="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/generic" xmlns:utility="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/utility" xmlns:compact="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/compact" xmlns:cross="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/cross" xmlns:query="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/query" xmlns:common="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/common">
+	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/structure" schemaLocation="SDMXStructure.xsd"/>
+	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/generic" schemaLocation="SDMXGenericData.xsd"/>
+	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/utility" schemaLocation="SDMXUtilityData.xsd"/>
+	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/compact" schemaLocation="SDMXCompactData.xsd"/>
+	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/cross" schemaLocation="SDMXCrossSectionalData.xsd"/>
+	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/query" schemaLocation="SDMXQuery.xsd"/>
+	<xs:import namespace="http://www.SDMX.org/resources/SDMXML/schemas/v1_0/common" schemaLocation="SDMXCommon.xsd"/>
 	<xs:element name="Structure" type="StructureType">
 		<xs:annotation>
 			<xs:documentation>The Structure is a message that contains all the structural metadata about a data set. This can be key families, concepts, or codelists.</xs:documentation>
@@ -34,22 +30,7 @@
 	</xs:element>
 	<xs:element name="CrossSectionalData" type="CrossSectionalDataType">
 		<xs:annotation>
-			<xs:documentation>CrossSectionalData contains data in an XML format which is optimized for describing many observations at a single point in time, and for the transfer of large data sets bilaterally. It is specific to each key family, according to standard mappings. It allows for key values to be expressed from the Group level down to the Observation level, and permits multiple observation values with different "measures".</xs:documentation>
-		</xs:annotation>
-	</xs:element>
-	<xs:element name="GenericMetadata" type="GenericMetadataType">
-		<xs:annotation>
-			<xs:documentation>GenericMetadata contains reported metadata in an XML format which supports any metadata structure definition.</xs:documentation>
-		</xs:annotation>
-	</xs:element>
-	<xs:element name="MetadataReport" type="MetadataReportType">
-		<xs:annotation>
-			<xs:documentation>MetadataReport contains a metadata report which is specific to a particular metadata structure definition. This format allows for the validation of the constraints described in the metadata structure definition with a generic XML parser.</xs:documentation>
-		</xs:annotation>
-	</xs:element>
-	<xs:element name="RegistryInterface" type="RegistryInterfaceType">
-		<xs:annotation>
-			<xs:documentation>The RegistryInterfaceMessage is used to conduct all interactions with the SDMX Registry Services.</xs:documentation>
+			<xs:documentation>CrossSectionalData contains data in an XML format which is optimized for describing many observations at a single point in time, and for the transfer of large data sets bilaterally. It is specific to each key family, according to standard mappings. It allows for key values to be expressed from the Group level down to the Observation level, and permits multiple observation values with different "measures". Time is attached at the DataSet level.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:element name="QueryMessage" type="QueryMessageType">
@@ -59,7 +40,7 @@
 	</xs:element>
 	<xs:element name="MessageGroup" type="MessageGroupType">
 		<xs:annotation>
-			<xs:documentation>The MessageGroupType is used to allow for more than one data or metadata message of a single type to be included in a single transmission. This element arises from the requirement for some services to be able to exchange data or metadata which may come from more than one source, and be structured according to more than one key family or metadata structure definition.</xs:documentation>
+			<xs:documentation>The MessageGroupType is used to allow for more than one data message of a single type to be included in a single transmission. This element arises from the requirement for some services to be able to exchange data which may come from more than one source, and be structured according to more than one key family.</xs:documentation>
 		</xs:annotation>
 	</xs:element>
 	<xs:complexType name="MessageType" abstract="true">
@@ -94,18 +75,10 @@
 		<xs:complexContent>
 			<xs:extension base="MessageType">
 				<xs:sequence>
-					<xs:element name="OrganisationSchemes" type="structure:OrganisationSchemesType" minOccurs="0"/>
-					<xs:element name="Dataflows" type="structure:DataflowsType" minOccurs="0"/>
-					<xs:element name="Metadataflows" type="structure:MetadataflowsType" minOccurs="0"/>
-					<xs:element name="CategorySchemes" type="structure:CategorySchemesType" minOccurs="0"/>
+					<xs:element name="Agencies" type="structure:AgenciesType" minOccurs="0"/>
 					<xs:element name="CodeLists" type="structure:CodeListsType" minOccurs="0"/>
-					<xs:element name="HierarchicalCodelists" type="structure:HierarchicalCodelistsType" minOccurs="0"/>
 					<xs:element name="Concepts" type="structure:ConceptsType" minOccurs="0"/>
-					<xs:element name="MetadataStructureDefinitions" type="structure:MetadataStructureDefinitionsType" minOccurs="0"/>
 					<xs:element name="KeyFamilies" type="structure:KeyFamiliesType" minOccurs="0"/>
-					<xs:element name="StructureSets" type="structure:StructureSetsType" minOccurs="0"/>
-					<xs:element name="ReportingTaxonomies" type="structure:ReportingTaxonomiesType" minOccurs="0"/>
-					<xs:element name="Processes" type="structure:ProcessesType" minOccurs="0"/>
 				</xs:sequence>
 			</xs:extension>
 		</xs:complexContent>
@@ -158,30 +131,6 @@
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
-	<xs:complexType name="GenericMetadataType">
-		<xs:annotation>
-			<xs:documentation>GenericMetadataType defines the contents of a Generic Metadata message.</xs:documentation>
-		</xs:annotation>
-		<xs:complexContent>
-			<xs:extension base="MessageType">
-				<xs:sequence>
-					<xs:element ref="genericmetadata:MetadataSet"/>
-				</xs:sequence>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
-	<xs:complexType name="MetadataReportType">
-		<xs:annotation>
-			<xs:documentation>MetadataReportType defines the contents of a metadata structure definition-specific Metadata Report message.</xs:documentation>
-		</xs:annotation>
-		<xs:complexContent>
-			<xs:extension base="MessageType">
-				<xs:sequence>
-					<xs:element ref="metadatareport:MetadataSet"/>
-				</xs:sequence>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
 	<xs:complexType name="QueryMessageType">
 		<xs:annotation>
 			<xs:documentation>QueryMessageType defines the contents of a QueryMessage.</xs:documentation>
@@ -191,32 +140,6 @@
 				<xs:sequence>
 					<xs:element name="Query" type="query:QueryType"/>
 				</xs:sequence>
-			</xs:extension>
-		</xs:complexContent>
-	</xs:complexType>
-	<xs:complexType name="RegistryInterfaceType">
-		<xs:annotation>
-			<xs:documentation>This is a type which describes a structure for holding all of the various dedicated registry interface message types.</xs:documentation>
-		</xs:annotation>
-		<xs:complexContent>
-			<xs:extension base="MessageType">
-				<xs:choice>
-					<xs:element name="SubmitSubscriptionRequest" type="registry:SubmitSubscriptionRequestType"/>
-					<xs:element name="SubmitSubscriptionResponse" type="registry:SubmitSubscriptionResponseType"/>
-					<xs:element name="NotifyRegistryEvent" type="registry:NotifyRegistryEventType"/>
-					<xs:element name="SubmitRegistrationRequest" type="registry:SubmitRegistrationRequestType"/>
-					<xs:element name="SubmitRegistrationResponse" type="registry:SubmitRegistrationResponseType"/>
-					<xs:element name="QueryRegistrationRequest" type="registry:QueryRegistrationRequestType"/>
-					<xs:element name="QueryRegistrationResponse" type="registry:QueryRegistrationResponseType"/>
-					<xs:element name="SubmitStructureRequest" type="registry:SubmitStructureRequestType"/>
-					<xs:element name="SubmitStructureResponse" type="registry:SubmitStructureResponseType"/>
-					<xs:element name="QueryStructureRequest" type="registry:QueryStructureRequestType"/>
-					<xs:element name="QueryStructureResponse" type="registry:QueryStructureResponseType"/>
-					<xs:element name="SubmitProvisioningRequest" type="registry:SubmitProvisioningRequestType"/>
-					<xs:element name="SubmitProvisioningResponse" type="registry:SubmitProvisioningResponseType"/>
-					<xs:element name="QueryProvisioningRequest" type="registry:QueryProvisioningRequestType"/>
-					<xs:element name="QueryProvisioningResponse" type="registry:QueryProvisioningResponseType"/>
-				</xs:choice>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>
@@ -231,8 +154,6 @@
 					<xs:element ref="utility:DataSet" maxOccurs="unbounded"/>
 					<xs:element ref="compact:DataSet" maxOccurs="unbounded"/>
 					<xs:element ref="cross:DataSet" maxOccurs="unbounded"/>
-					<xs:element ref="genericmetadata:MetadataSet" maxOccurs="unbounded"/>
-					<xs:element ref="metadatareport:MetadataSet" maxOccurs="unbounded"/>
 				</xs:choice>
 				<xs:attribute name="id" type="xs:NMTOKEN" use="optional"/>
 			</xs:extension>
@@ -248,12 +169,12 @@
 			<xs:documentation>HeaderType defines the header fields used for all messages. ID identifies a data flow definition, which, when combined with time, uniquely identifies the data set. Test indicates whather the message is for test purposes or not. Truncated is used in data messages which are responding to Query messages, and is set to true only if the response has been truncated to meet size limits suggested by the defaultLimit attribute in the Query mesage.  Name provides a name for the transmission. Prepared is the date prepared. Sender is information about the sender, and Receiver is information about the receiver. Agency provides the code identifier/abbreviation for the maintenance agency of a data set. Data set id provides an identifier for a contained data set. Action code provides a code for determining whether the enclosed message is an Update or Delete message (not to be used with the UtilityData message). KeyFamilyRef is used to reference a key family for a contained data set, using its id. (This information is required at the DataSet level for some messages, but is provided here as a convenience for those messages which do not require it.) KeyFamilyAgency specifies the agency of the key family using its coded id.  Fields which refer to a contained data set need not be used if the message contains a query or structural information - these messages provide specific fields for holding this information. The ones here are not to be used as defaults. Extracted is a time-stamp from the system rendering the data; ReportingBegin and ReportingEnd provide the time period covered by the message (in the case of data). Source provides human-readable information about the source of the data.</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="ID" type="common:IDType"/>
+			<xs:element name="ID" type="xs:NCName"/>
 			<xs:element name="Test" type="xs:boolean" default="false"/>
 			<xs:element name="Truncated" type="xs:boolean" minOccurs="0"/>
 			<xs:element name="Name" type="common:TextType" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Prepared" type="HeaderTimeType"/>
-			<xs:element name="Sender" type="PartyType" maxOccurs="unbounded">
+			<xs:element name="Sender" type="PartyType">
 				<xs:unique name="SDMX_SenderNameLanguageUniqueness">
 					<xs:selector xpath="message:Name"/>
 					<xs:field xpath="@xml:lang"/>
@@ -270,6 +191,7 @@
 			<xs:element name="DataSetAgency" type="xs:NMTOKEN" minOccurs="0"/>
 			<xs:element name="DataSetID" type="xs:NMTOKEN" minOccurs="0"/>
 			<xs:element name="DataSetAction" type="common:ActionType" minOccurs="0"/>
+			
 			<xs:element name="Extracted" type="xs:dateTime" minOccurs="0"/>
 			<xs:element name="ReportingBegin" type="HeaderTimeType" minOccurs="0"/>
 			<xs:element name="ReportingEnd" type="HeaderTimeType" minOccurs="0"/>
