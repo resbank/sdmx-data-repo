@@ -4,7 +4,6 @@
             [clojure.test :refer :all]
             [clojure.zip :as zip]
             [environ.core :refer [env]]
-            [hikari-cp.core :refer [make-datasource close-datasource]]
             [hugsql.core :as sql]
             [java-time]
             [spartadata.database.delete :refer [delete-dataset]]
@@ -32,7 +31,7 @@
 
 (deftest dataset-initialisation
   (testing "Testing the database"
-    (let [dbconn {:datasource (make-datasource {:jdbc-url (:db env)})}
+    (let [dbconn {:connection-uri (:sdmx-postgres env)}
           dataset {:agencyid "SARB.ERD" :id "TEST" :version "1.0"}
           xml-file1 (slurp "resources/test/test_message_1.xml")
           xml-file2 (slurp "resources/test/test_message_2.xml")
