@@ -56,13 +56,11 @@
 
 (s/def ::data-upload-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
-(s/def ::nextRelease (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
 (s/def ::releaseDescription string?)
-(s/def ::insertAsRelease boolean?)
 
-(s/def ::data-upload-query-params (s/keys :opt-un [::insertAsRelease ::releaseDescription ::validate]))
+(s/def ::data-upload-query-params (s/keys :opt-un [::releaseDescription ::validate]))
 
-(s/def ::data-upload-hist-query-params (s/keys :req-un [::nextRelease] :opt-un [::releaseDescription ::validate]))
+(s/def ::data-upload-hist-query-params (s/keys :req-un [::release ::releaseDescription ] :opt-un [::validate]))
 
 (s/def ::data-rollback-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
