@@ -1,4 +1,4 @@
-(ns spartadata.sdmx-errors
+(ns spartadata.sdmx.errors
   (:require [clojure.data.xml :as xml]))
 
 
