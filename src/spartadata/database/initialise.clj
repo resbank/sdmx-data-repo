@@ -30,6 +30,5 @@
       (create-series-attr-table tx)
       (create-observation-table tx)
       (create-observation-attr-table tx)
-      (create-valid-idx tx)
       (create-obs-idx tx)
       (create-array-idx tx))))

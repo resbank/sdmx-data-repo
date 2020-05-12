@@ -6,8 +6,8 @@
             [hugsql.core :as sql]
             [java-time]
             [jsonista.core :as json]
-            [spartadata.database.upload :refer [validate-data]]
-            [spartadata.sdmx-errors :refer [sdmx-error]]))
+            [spartadata.sdmx.validate :refer [validate-data]]
+            [spartadata.sdmx.errors :refer [sdmx-error]]))
 
 
 
@@ -141,8 +141,8 @@
                    (assoc :TIME_PERIOD time-period) 
                    (assoc :OBS_VALUE obs-value))) 
              (if release  
-               (get-obs-by-release db {:release (java-time/sql-timestamp release) :series_id series-id})
-               (get-obs db {:series_id series-id})))})
+               (get-obs-and-attrs-by-release db {:release (java-time/sql-timestamp release) :series_id series-id})
+               (get-obs-and-attrs db {:series_id series-id})))})
 
 
 
@@ -242,5 +242,5 @@
                           (assoc :TIME_PERIOD time-period) 
                           (assoc :OBS_VALUE obs-value)))) 
        (if release  
-         (get-obs-by-release db {:release (java-time/sql-timestamp release) :series_id series-id})
-         (get-obs db {:series_id series-id}))))
+         (get-obs-and-attrs-by-release db {:release (java-time/sql-timestamp release) :series_id series-id})
+         (get-obs-and-attrs db {:series_id series-id}))))

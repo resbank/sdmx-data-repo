@@ -41,9 +41,10 @@ DROP TABLE IF EXISTS dataset_attribute;
 CREATE TABLE IF NOT EXISTS release (
   release_id SERIAL PRIMARY KEY,
   embargo TIMESTAMP NOT NULL,
-  description VARCHAR(100),
+  description VARCHAR(100) NOT NULL,
   dataset_id INT REFERENCES dataset(dataset_id) ON DELETE CASCADE, 
-  UNIQUE (embargo, dataset_id)
+  UNIQUE (embargo, dataset_id),
+  UNIQUE (description, dataset_id)
 );
 
 -- :name drop-release-table
@@ -132,7 +133,6 @@ DROP TABLE IF EXISTS series_attribute;
 CREATE TABLE IF NOT EXISTS observation (
   observation_id SERIAL PRIMARY KEY,
   created TIMESTAMP NOT NULL DEFAULT current_timestamp,
-  valid BOOLEAN NOT NULL DEFAULT true,
   time_period DATE NOT NULL,
   obs_value FLOAT,
   series_id INTEGER REFERENCES series(series_id) ON DELETE CASCADE,

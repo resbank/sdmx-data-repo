@@ -20,7 +20,7 @@ DO UPDATE SET val = :val;
 -- :result :one
 -- :doc Insert a release date (:embargo) for the given dataset, do nothing on conflict.
 INSERT INTO release (embargo, description, dataset_id)
-VALUES (:embargo, :description, :dataset_id)
+VALUES (:embargo::TIMESTAMP, :description, :dataset_id)
 RETURNING embargo;
 
 -- :name insert-dimension
@@ -56,24 +56,7 @@ VALUES (:attr, :val, :series_id)
 ON CONFLICT ON CONSTRAINT series_attribute_attr_val_series_id_key
 DO UPDATE SET val = :val;
 
--- :name kill-obs
--- :command :execute
--- :result :affected
--- :doc 'Kill' the observation (selected by its ID) by setting the end of its 'lifetime' to the current time.
-UPDATE Observation 
-SET valid=false 
-WHERE observation_id = :observation_id;
-
--- :name update-obs
--- :command :query
--- :result :one
--- :doc Replace the value of the observation for a given observation ID.
-UPDATE observation
-SET obs_value = :obs_value
-WHERE observation_id = :observation_id
-RETURNING observation_id; 
-
--- :name insert-obs
+-- :name upsert-obs
 -- :command :query
 -- :result :one
 -- :doc Insert a new observation record. Will not throw an error if there is currently a 'live' observation for the given series and time period.
@@ -84,66 +67,18 @@ INSERT INTO observation (
   series_id 
 )
 VALUES (
-  :created,
-  :time_period,
-  :obs_value,
-  :series_id
-)
-RETURNING observation_id;
-
--- :name insert-obs2
--- :command :query
--- :result :one
--- :doc Insert a new observation record. Will not throw an error if there is currently a 'live' observation for the given series and time period.
-INSERT INTO observation (
-  created,
-  time_period, 
-  obs_value,
-  series_id 
-)
-VALUES (
-  :created,
-  :time_period::TIMESTAMP,
-  :obs_value,
-  :series_id
-)
-RETURNING observation_id;
-
--- :name insert-obs3
--- :command :query
--- :result :one
--- :doc Insert a new observation record. Will not throw an error if there is currently a 'live' observation for the given series and time period.
-INSERT INTO observation (
-  created,
-  valid,
-  time_period, 
-  obs_value,
-  series_id 
-)
-VALUES (
-  :created,
-  :valid,
-  :time_period::TIMESTAMP,
+  :created::TIMESTAMP,
+  :time_period::DATE,
   :obs_value,
   :series_id
 )
 ON CONFLICT ON CONSTRAINT observation_series_id_time_period_created_key
 DO UPDATE SET 
-  created = :created,
-  valid = :valid,
-  time_period = :time_period::TIMESTAMP,
+  created = :created::TIMESTAMP,
+  time_period = :time_period::DATE,
   obs_value = :obs_value,
   series_id = :series_id
 RETURNING observation_id;
-
--- :name upsert-obs-attribute
--- :command :execute
--- :result :affected
--- :doc Insert attribute, update :val on conflict.
-INSERT INTO observation_attribute (attr, val, observation_id)
-VALUES (:attr, :val, :observation_id)
-ON CONFLICT ON CONSTRAINT observation_attribute_attr_val_observation_id_key
-DO UPDATE SET val = :val;
 
 -- :name upsert-obs-attributes
 -- :command :execute
@@ -153,9 +88,3 @@ INSERT INTO observation_attribute (attr, val, observation_id)
 VALUES :t*:attrs
 ON CONFLICT ON CONSTRAINT observation_attribute_attr_val_observation_id_key
 DO UPDATE SET val = excluded.val;
-
--- :name insert-table
--- :command :execute
--- :result :affected
--- :doc Insert a new observation record. Will not throw an error if there is currently a 'live' observation for the given series and time period.
-select * into test from observation where series_id=:series_id;

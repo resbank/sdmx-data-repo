@@ -23,12 +23,20 @@ WHERE dataset_id=:dataset_id;
 -- :command query
 -- :result :one
 -- :doc Return the timestamp of the most recent release of the dataset
-SELECT 
-  embargo
+SELECT *
 FROM release
 WHERE dataset_id=:dataset_id
 ORDER BY embargo DESC
 LIMIT 1;
+
+-- :name get-releases
+-- :command query
+-- :result :many
+-- :doc Return the timestamp of the most recent release of the dataset
+SELECT *
+FROM release
+WHERE dataset_id=:dataset_id
+ORDER BY embargo DESC;
 
 -- :name get-dimension-id
 -- :command :query
@@ -147,7 +155,6 @@ FROM (
 LEFT JOIN series_attribute ON series_attribute.series_id=series_dimension_tmp.series_id
 GROUP BY series_dimension_tmp.series_id, series_dimension_tmp.dims, series_dimension_tmp.dim_vals;
 
-
 -- :name get-series-attrs
 -- :command :query
 -- :result :many
@@ -158,11 +165,12 @@ SELECT
 FROM series_attribute
 WHERE series_id=:series_id;
 
--- :name get-obs
+-- :name get-obs-and-attrs
 -- :command :query
 -- :result :many
 -- :doc Return observation.
 SELECT
+  max(created) AS latest_release, 
   observation.time_period::TEXT,
   observation.obs_value,
   array_agg(observation_attribute.attr) AS attrs,
@@ -170,16 +178,15 @@ SELECT
 FROM observation
 INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
 WHERE observation.series_id=:series_id
-AND observation.valid=true
-GROUP BY observation.observation_id, observation.time_period, observation.obs_value
+GROUP BY observation.time_period, observation.obs_value
 ORDER BY observation.time_period;
 
--- :name get-obs-by-release
+-- :name get-obs-and-attrs-by-release
 -- :command :query
 -- :result :many
 -- :doc Return observation.
 SELECT
-  max(created) AS release, 
+  max(created) AS latest_release, 
   observation.time_period::TEXT,
   observation.obs_value,
   array_agg(observation_attribute.attr) AS attrs,
@@ -191,65 +198,24 @@ AND created <= :release::TIMESTAMP
 GROUP BY observation.time_period, observation.obs_value
 ORDER BY observation.time_period;
 
--- :name get-obs-attrs
+-- :name get-obs
 -- :command :query
 -- :result :many
--- :doc Return observation attributes from its observation ID
+-- :doc Return observation.
 SELECT
-  attr,
-  val
-FROM observation_attribute
-WHERE observation_id=:observation_id;
-
--- :name get-live-obs
--- :command :query
--- :result :one
--- :doc Return the 'live' observation for a given series and time period.
-SELECT 
-  observation_id, 
-  time_period, 
-  obs_value, 
-  series_id
-FROM observation 
-WHERE series_id = :series_id 
-AND time_period = :time_period 
-AND valid=true;
-
--- :name get-live-obs2
--- :command :query
--- :result :many
--- :doc Return the 'live' observation for a given series and time period.
-SELECT 
-  created,
-  valid,
-  time_period::TEXT, 
-  obs_value, 
-  series_id
-FROM observation 
-WHERE series_id = :series_id 
-AND valid=true;
-
--- :name get-live-obs3
--- :command :query
--- :result :many
--- :doc Return the 'live' observation for a given series and time period.
-SELECT 
-  observation_id,
-  created,
-  valid,
-  time_period::TEXT, 
-  obs_value, 
-  series_id
-FROM observation 
-WHERE series_id = :series_id 
-AND time_period IN (:v*:time_periods)
-AND valid=true;
-
--- :name created-previous-to?
--- :command :query
--- :result :one
--- :doc Tests whether a release is within the 'lifetime' of a particular observation
-SELECT 
-  created <= :release::TIMESTAMP AS antecedent
+  max(created) AS latest_release, 
+  time_period::TEXT,
+  obs_value
 FROM observation
-WHERE observation_id=:observation_id;
+WHERE series_id=:series_id
+GROUP BY time_period, obs_value
+ORDER BY time_period;
+
+-- :name get-obs-following-release
+-- :command :query
+-- :result :many
+-- :doc Return observation.
+SELECT observation_id
+FROM observation
+WHERE series_id=:series_id
+AND created > :embargo::TIMESTAMP;
