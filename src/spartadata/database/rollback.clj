@@ -1,6 +1,5 @@
 (ns spartadata.database.rollback
   (:require [clojure.java.jdbc :as jdbc]
-            [hikari-cp.core :refer [make-datasource close-datasource]]
             [hugsql.core :as sql]
             [java-time]))
 
@@ -11,13 +10,22 @@
 
 (sql/def-db-fns "sql/query.sql")
 (sql/def-db-fns "sql/update.sql")
+(sql/def-db-fns "sql/delete.sql")
 
 
 ;; Rollback release
 
 
-(defn rollback-release []
-  "Rolls back the latest realease
-    1. Delete all observations created on or after latest release
-    2. Set all observations contained in the release preceding the latest release to valid
-    3. Delete latest release from release table")
+(defn rollback-release [db dataflow]
+  "Rolls back the latest realease"
+  (let [dataset (get-dataset-id db (clojure.set/rename-keys dataflow {:agency-id :agencyid :resource-id :id}))
+        releases (get-releases db dataset)]
+    (if (< 1 (count releases))
+      (do (doseq [series (get-series-ids db dataset)]
+            (jdbc/with-db-transaction [tx db]
+              (doseq [obs (get-obs-following-release tx (merge (second releases) series))
+                      :when obs] 
+                (delete-obs tx obs))))
+          (delete-release db (merge (first releases) dataset))
+          "Rollback completed.")
+      "Nothing to roll back to. No action taken.")))

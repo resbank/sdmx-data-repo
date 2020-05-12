@@ -3,7 +3,8 @@
             [environ.core :refer [env]]
             [spartadata.database.retrieve :refer [retrieve-data-message]]
             [spartadata.database.upload :refer [upload-data-message]]
-            [spartadata.database.upload-historical :refer [upload-historical-data-message]]))
+            [spartadata.database.upload-historical :refer [upload-historical-data-message]]
+            [spartadata.database.rollback :refer [rollback-release]]))
 
 (defn structure [request]
   {:status 301
@@ -12,8 +13,10 @@
 
 (defn data [connection-pool {headers :headers {path-params :path query-params :query} :parameters}]
   (let [flow-ref-params (mapv #(clojure.string/split % #"\+") (clojure.string/split (:flow-ref path-params) #","))
-        key-params (if (and (:key path-params) (not= "all" (:key path-params))) (mapv #(clojure.string/split % #"\+") (clojure.string/split (:key path-params) #"\." -1)) "all")
-        provider-ref-params (if (:provider-ref path-params) (mapv #(clojure.string/split % #"\+") (clojure.string/split (:provider-ref path-params) #",")))
+        key-params (if (and (:key path-params) (not= "all" (:key path-params))) 
+                     (mapv #(clojure.string/split % #"\+") (clojure.string/split (:key path-params) #"\." -1)) "all")
+        provider-ref-params (if (:provider-ref path-params) 
+                              (mapv #(clojure.string/split % #"\+") (clojure.string/split (:provider-ref path-params) #",")))
         data-message (try (retrieve-data-message headers
                                                  {:datasource connection-pool}
                                                  {:flow-ref (condp = (count flow-ref-params)
@@ -61,8 +64,10 @@
               (catch Exception e (do (.printStackTrace e) (throw e))))})
 
 (defn data-rollback [connection-pool request]
-  {:status 501
-   :body {}})
+  {:status 201
+   :body (try (rollback-release {:datasource connection-pool} 
+                                (get-in request [:parameters :path])) 
+              (catch Exception e (do (.printStackTrace e) (throw e))))})
 
 (defn metadata [request]
   {:status 301
