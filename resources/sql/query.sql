@@ -1,7 +1,15 @@
--- :name get-dataset-id
+-- :name get-datasets
 -- :command :query
 -- :result :one
--- :doc Return dataset id corresponding to a map of agency/id/version.
+-- :doc Return all datasets, ordered (descending) by version.
+SELECT *
+FROM dataset
+ORDER BY version DESC;
+
+-- :name get-dataset
+-- :command :query
+-- :result :one
+-- :doc Return dataset corresponding to a map of :agency/:id/:version.
 SELECT 
   dataset_id
 FROM dataset
@@ -9,39 +17,44 @@ WHERE agencyid =:agencyid
 AND id = :id
 AND version = :version;
 
--- :name get-dataset-attrs
+-- :name get-dataset-and-attrs
 -- :command :query
--- :result :many
--- :doc Return dataset id corresponding to a map of agencyid/id/version.
-SELECT 
-  attr,
-  val
-FROM dataset_attribute
-WHERE dataset_id=:dataset_id;
+-- :result :one
+-- :doc Return the observations along with attributes corresponding to :series_id.
+SELECT
+  dataset.dataset_id,
+  array_agg(dataset_attribute.attr) AS attrs,
+  array_agg(dataset_attribute.val) AS vals
+FROM dataset
+LEFT JOIN dataset_attribute ON dataset_attribute.dataset_id=dataset.dataset_id
+WHERE dataset.agencyid=:agencyid
+AND dataset.id=:id
+AND dataset.version=:version
+GROUP BY dataset.dataset_id;
 
 -- :name get-latest-release
--- :command query
+-- :command :query
 -- :result :one
--- :doc Return the timestamp of the most recent release of the dataset
+-- :doc Return the timestamp of the most recent release corresponding to a map of :dataset_id.
 SELECT *
 FROM release
 WHERE dataset_id=:dataset_id
-ORDER BY embargo DESC
+ORDER BY release DESC
 LIMIT 1;
 
 -- :name get-releases
--- :command query
+-- :command :query
 -- :result :many
--- :doc Return the timestamp of the most recent release of the dataset
+-- :doc Return the timestamps of the the releases (latest first)  corresponding to a map of :dataset_id.
 SELECT *
 FROM release
 WHERE dataset_id=:dataset_id
-ORDER BY embargo DESC;
+ORDER BY release DESC;
 
--- :name get-dimension-id
+-- :name get-dimension
 -- :command :query
 -- :result :one
--- :doc Return the :dimension_id matching the given :dim, :val, and :dataset_id
+-- :doc Return the dimension corresponding to a map of :dim/:val/:dataset_id.
 SELECT 
   dimension_id
 FROM dimension
@@ -49,20 +62,32 @@ WHERE dim = :dim
 AND val = :val
 AND dataset_id = :dataset_id;
 
--- :name get-dim-ids-by-pos
+-- :name get-dims-by-series
 -- :command :query
 -- :result :many
--- :doc Return the :dimension_ids matching the given :pos and :dataset_id, :pos is the position relating to a certain dimension in the data structure definition
+-- :doc Return the dimensions corresponding to a map of :series_id.
+SELECT 
+  dim,
+  val
+FROM series 
+INNER JOIN series_dimension ON series_dimension.series_id = series.series_id
+INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
+WHERE series.series_id=:series_id;
+
+-- :name get-dims-by-pos
+-- :command :query
+-- :result :many
+-- :doc Return the dimensions corresponding to a map of :pos/:dataset_id. NB, the position of the dimension in the data structure definition is denoted by pos.
 SELECT 
   dimension_id
 FROM dimension
 WHERE pos = :pos
 AND dataset_id = :dataset_id;
 
--- :name get-dim-ids-by-vals
+-- :name get-dims-by-vals
 -- :command :query
 -- :result :many
--- :doc Return the :dimension_id matchings the given dimension :vals and :dataset_id
+-- :doc Return the dimensions corresponding to a map of :v*:vals/:pos/:dataset_id. NB, the position of the dimension in the data structure definition is denoted by pos.
 SELECT 
   dimension_id
 FROM dimension
@@ -70,31 +95,42 @@ WHERE val IN (:v*:vals)
 AND pos = :pos
 AND dataset_id = :dataset_id;
 
--- :name get-series-id
--- :command :query
--- :result :one
--- :doc Return the :series_id that matches the given dimensions.
-SELECT series_id
-FROM series 
-WHERE dataset_id=:dataset_id
-AND dimension_ids=ARRAY[:v*:dimension_ids]::INT[];
-
--- :name get-series-ids
+-- :name get-series
 -- :command :query
 -- :result :many
--- :doc Return the :series_id that matches the given dataset ID.
+-- :doc Return the series corresponding to a map of :dataset_id.
 SELECT series_id
 FROM series 
 WHERE dataset_id=:dataset_id;
 
--- :name get-series
+-- :name match-single-series
+-- :command :query
+-- :result :one
+-- :doc Match series to a map of :v*:dimension_ids.
+SELECT 
+  series_id, 
+  array_agg(dimension_id) AS dims 
+FROM series_dimension 
+WHERE dimension_id IN (:v*:dimension_ids) 
+GROUP BY series_id 
+HAVING sort(array_agg(dimension_id))=sort(ARRAY[:v*:dimension_ids]::INT[]);
+
+-- :name match-series
 -- :command :query
 -- :result :many
--- :doc Return observation.
+-- :doc Match series to a map of :v*:dimension_ids.
+SELECT series_id
+FROM series_dimension
+WHERE dimension_id IN (:v*:dimension_ids)
+
+-- :name get-series-and-attrs
+-- :command :query
+-- :result :many
+-- :doc Return the series along with dimensions and attributes corresponding to a map of :dataset_id.
 SELECT
-  series_dimension_tmp.series_id,
-  series_dimension_tmp.dims,
-  series_dimension_tmp.dim_vals,
+  series_and_dimensions_tmp.series_id,
+  series_and_dimensions_tmp.dims,
+  series_and_dimensions_tmp.dim_vals,
   array_agg(series_attribute.attr) AS attrs,
   array_agg(series_attribute.val) AS attr_vals
 FROM (
@@ -107,38 +143,18 @@ FROM (
   INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
   WHERE series.dataset_id=:dataset_id
   GROUP BY series.series_id
-) AS series_dimension_tmp
-LEFT JOIN series_attribute ON series_attribute.series_id=series_dimension_tmp.series_id
-GROUP BY series_dimension_tmp.series_id, series_dimension_tmp.dims, series_dimension_tmp.dim_vals;
+) AS series_and_dimensions_tmp
+LEFT JOIN series_attribute ON series_attribute.series_id=series_and_dimensions_tmp.series_id
+GROUP BY series_and_dimensions_tmp.series_id, series_and_dimensions_tmp.dims, series_and_dimensions_tmp.dim_vals;
 
--- :name get-series-dims
+-- :name get-series-and-attrs-from-ids
 -- :command :query
 -- :result :many
--- :doc Return the dimensions that matches the given series ID.
-SELECT 
-  dim,
-  val
-FROM series 
-INNER JOIN series_dimension ON series_dimension.series_id = series.series_id
-INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
-WHERE series.series_id=:series_id;
-
--- :name get-series-ids-from-dim-ids
--- :command :query
--- :result :many
--- :doc Return the series IDs that are referenced by  the given dimension IDs
-SELECT series_id
-FROM series_dimension
-WHERE dimension_id IN (:v*:dimension_ids)
-
--- :name get-series-from-ids
--- :command :query
--- :result :many
--- :doc Return the series IDs that are referenced by  the given dimension IDs
+-- :doc Return the series along with dimensions and attributes corresponding to a map of :v*:series_ids.
 SELECT
-  series_dimension_tmp.series_id,
-  series_dimension_tmp.dims,
-  series_dimension_tmp.dim_vals,
+  series_and_dimensions_tmp.series_id,
+  series_and_dimensions_tmp.dims,
+  series_and_dimensions_tmp.dim_vals,
   array_agg(series_attribute.attr) AS attrs,
   array_agg(series_attribute.val) AS attr_vals
 FROM (
@@ -151,52 +167,9 @@ FROM (
   INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
   WHERE series.series_id IN (:v*:series_ids)
   GROUP BY series.series_id
-) AS series_dimension_tmp
-LEFT JOIN series_attribute ON series_attribute.series_id=series_dimension_tmp.series_id
-GROUP BY series_dimension_tmp.series_id, series_dimension_tmp.dims, series_dimension_tmp.dim_vals;
-
--- :name get-series-attrs
--- :command :query
--- :result :many
--- :doc Return dataset id corresponding to a map of agencyid/id/version.
-SELECT 
-  attr,
-  val
-FROM series_attribute
-WHERE series_id=:series_id;
-
--- :name get-obs-and-attrs
--- :command :query
--- :result :many
--- :doc Return observation.
-SELECT
-  max(created) AS latest_release, 
-  observation.time_period::TEXT,
-  observation.obs_value,
-  array_agg(observation_attribute.attr) AS attrs,
-  array_agg(observation_attribute.val) AS vals
-FROM observation
-INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
-WHERE observation.series_id=:series_id
-GROUP BY observation.time_period, observation.obs_value
-ORDER BY observation.time_period;
-
--- :name get-obs-and-attrs-by-release
--- :command :query
--- :result :many
--- :doc Return observation.
-SELECT
-  max(created) AS latest_release, 
-  observation.time_period::TEXT,
-  observation.obs_value,
-  array_agg(observation_attribute.attr) AS attrs,
-  array_agg(observation_attribute.val) AS vals
-FROM observation
-INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
-WHERE observation.series_id=:series_id
-AND created <= :release::TIMESTAMP 
-GROUP BY observation.time_period, observation.obs_value
-ORDER BY observation.time_period;
+) AS series_and_dimensions_tmp
+LEFT JOIN series_attribute ON series_attribute.series_id=series_and_dimensions_tmp.series_id
+GROUP BY series_and_dimensions_tmp.series_id, series_and_dimensions_tmp.dims, series_and_dimensions_tmp.dim_vals;
 
 -- :name get-obs
 -- :command :query
@@ -214,8 +187,53 @@ ORDER BY time_period;
 -- :name get-obs-following-release
 -- :command :query
 -- :result :many
--- :doc Return observation.
+-- :doc Return an observation from the requested series that follows the release in the map :release/:series_id.
 SELECT observation_id
 FROM observation
 WHERE series_id=:series_id
-AND created > :embargo::TIMESTAMP;
+AND created > :release::TIMESTAMP;
+
+-- :name get-obs-following-release-by-dataset
+-- :command :query
+-- :result :one
+-- :doc Return an observation from the requested dataset that follows the release in the map :release/:dataset_id.
+SELECT
+ observation.created 
+FROM series
+INNER JOIN observation ON observation.series_id=series.series_id
+WHERE series.dataset_id=:dataset_id
+AND observation.created > :release::TIMESTAMP
+LIMIT 1;
+
+-- :name get-obs-and-attrs
+-- :command :query
+-- :result :many
+-- :doc Return the observations along with attributes corresponding to :series_id.
+SELECT
+  max(created) AS latest_release, 
+  observation.time_period::TEXT,
+  observation.obs_value,
+  array_agg(observation_attribute.attr) AS attrs,
+  array_agg(observation_attribute.val) AS vals
+FROM observation
+LEFT JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
+WHERE observation.series_id=:series_id
+GROUP BY observation.time_period, observation.obs_value
+ORDER BY observation.time_period;
+
+-- :name get-obs-and-attrs-by-release
+-- :command :query
+-- :result :many
+-- :doc Return the observations along with attributes corresponding to :series_id/:release.
+SELECT
+  max(created) AS latest_release, 
+  observation.time_period::TEXT,
+  observation.obs_value,
+  array_agg(observation_attribute.attr) AS attrs,
+  array_agg(observation_attribute.val) AS vals
+FROM observation
+LEFT JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
+WHERE observation.series_id=:series_id
+AND created <= :release::TIMESTAMP 
+GROUP BY observation.time_period, observation.obs_value
+ORDER BY observation.time_period;

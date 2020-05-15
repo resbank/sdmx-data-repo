@@ -24,5 +24,5 @@ WHERE observation_id=:observation_id;
 -- :result :affected
 -- :doc Delete release.
 DELETE FROM release
-WHERE embargo=:embargo::TIMESTAMP
+WHERE release=:release::TIMESTAMP
 AND dataset_id=:dataset_id;
