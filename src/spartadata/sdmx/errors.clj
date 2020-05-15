@@ -2,6 +2,30 @@
   (:require [clojure.data.xml :as xml]))
 
 
+;; Error codes
+
+
+;; SDMX error                                     HTTP status code
+;;
+;; 100 No results found                           404 Not found
+;; 110 Unauthorized 	                            401 Unauthorized
+;; 130 Response too large due to client request   413 Request entity too large
+;; 140 Syntax error                               400 Bad syntax
+;; 150 Semantic error                             403 Forbidden
+;; 500 Internal Server error                      500 Internal server error
+;; 501 Not implemented                            501 Not implemented
+;; 503 Service unavailable                        503 Service unavailable
+;; 510 Response size exceeds service limit        413 Request entity too large
+;; 1000+ Custom errors                            500 Internal server error
+;;
+;; 1000 Validation failed
+;; 1001 Validation not supported
+;; 1002 Format not supported
+
+
+;; Error message generating function
+
+
 (xml/alias-uri 'messg "http://www.SDMX.org/resources/SDMXML/schemas/v2_0/message")
 (xml/alias-uri 'commn "http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common")
 (xml/alias-uri 'xsi "http://www.w3.org/2001/XMLSchema-instance")
