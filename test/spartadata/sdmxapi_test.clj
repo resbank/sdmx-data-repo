@@ -1,4 +1,4 @@
-(ns spartadata.database-test
+(ns spartadata.sdmxapi-test
   (:require [clojure.data.xml :as xml]
             [clojure.data.zip.xml :as zip-xml]
             [clojure.test :refer :all]
@@ -6,11 +6,10 @@
             [environ.core :refer [env]]
             [hugsql.core :as sql]
             [java-time]
-            [spartadata.database.delete :refer [delete-dataset]]
-            [spartadata.database.retrieve :refer [retrieve-data-message]]
-            [spartadata.database.rollback :refer [rollback-release]]
-            [spartadata.database.upload :refer [upload-data-message]]
-            [spartadata.database.upload-historical :refer [upload-historical-data-message]]))
+            [spartadata.model.delete :refer [delete-dataset]]
+            [spartadata.model.retrieve :refer [retrieve-data-message]]
+            [spartadata.model.rollback :refer [rollback-release]]
+            [spartadata.model.upload :refer [upload-data-message upload-historical-data-message]]))
 
 (sql/def-db-fns "sql/query.sql")
 
@@ -40,7 +39,7 @@
       ; => Test that the first data message can be recovered
       ;    Conditions: do not specify release (current unreleased data)
       (upload-historical-data-message dbconn dataset xml-file1 "2010-01-01T00:00:00" :release-description "First release")
-      (let [dataset-id (get-dataset-id dbconn dataset)
+      (let [dataset-id (get-dataset dbconn dataset)
             latest-release (:embargo (get-latest-release dbconn dataset-id))]
         (let [from-file (-> xml-file1 xml/parse-str zip/xml-zip)
               from-database (zip/xml-zip (retrieve-data-message dbconn {:flow-ref dataset :key nil} :validate? true))]
@@ -90,5 +89,4 @@
       ;    Conditions: do not specify release
 
       ; 5. Delete dataset
-      (delete-dataset dbconn dataset)
-      (close-datasource (:datasource dbconn)))))
+      (delete-dataset dbconn dataset))))
