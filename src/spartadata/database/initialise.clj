@@ -9,7 +9,7 @@
 
 
 (sql/def-db-fns "sql/tables.sql")
-;(sql/def-db-fns "sql/functions.sql")
+(sql/def-db-fns "sql/functions.sql")
 ;(sql/def-db-fns "sql/triggers.sql")
 (sql/def-db-fns "sql/index.sql")
 
@@ -21,6 +21,7 @@
 (defn initialise []
   (let [db {:connection-uri (:sdmx-postgres env)}]
     (jdbc/with-db-transaction [tx db]
+      (create-intarray-extension tx)
       (create-dataset-table tx)
       (create-dataset-attr-table tx)
       (create-release-table tx)
@@ -30,5 +31,6 @@
       (create-series-attr-table tx)
       (create-observation-table tx)
       (create-observation-attr-table tx)
+      (create-obs-attr-idx tx)
       (create-obs-idx tx)
       (create-array-idx tx))))

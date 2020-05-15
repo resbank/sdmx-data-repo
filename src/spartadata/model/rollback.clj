@@ -1,4 +1,4 @@
-(ns spartadata.database.rollback
+(ns spartadata.model.rollback
   (:require [clojure.java.jdbc :as jdbc]
             [hugsql.core :as sql]
             [java-time]))
@@ -18,10 +18,10 @@
 
 (defn rollback-release [db dataflow]
   "Rolls back the latest realease"
-  (let [dataset (get-dataset-id db (clojure.set/rename-keys dataflow {:agency-id :agencyid :resource-id :id}))
+  (let [dataset (get-dataset db (clojure.set/rename-keys dataflow {:agency-id :agencyid :resource-id :id}))
         releases (get-releases db dataset)]
     (if (< 1 (count releases))
-      (do (doseq [series (get-series-ids db dataset)]
+      (do (doseq [series (get-series db dataset)]
             (jdbc/with-db-transaction [tx db]
               (doseq [obs (get-obs-following-release tx (merge (second releases) series))
                       :when obs] 

@@ -23,6 +23,7 @@
     (jdbc/with-db-transaction [tx db]
       (drop-array-idx tx)
       (drop-obs-idx tx)
+      (drop-obs-attr-idx tx)
       (drop-observation-attr-table tx)
       (drop-observation-table tx)
       (drop-series-attr-table tx)
