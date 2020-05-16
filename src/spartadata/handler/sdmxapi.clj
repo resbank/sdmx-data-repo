@@ -5,10 +5,10 @@
             [spartadata.model.upload :refer [upload-data-message upload-historical-data-message]]
             [spartadata.model.rollback :refer [rollback-release]]))
 
-(defn structure [request]
-  {:status 301
-   :headers {"location" (str (:sdmx-registry env) (:uri request))}
-   :body {}})
+
+
+;; Data API
+
 
 (defn data [connection-pool {headers :headers {path-params :path query-params :query} :parameters}]
   (let [flow-ref-params (mapv #(clojure.string/split % #"\+") (clojure.string/split (:flow-ref path-params) #","))
@@ -105,17 +105,33 @@
                                 (get-in request [:parameters :path])) 
               (catch Exception e (do (.printStackTrace e) (throw e))))})
 
+
+
+;; Redirects to Fusion Registry
+
+
 (defn metadata [request]
   {:status 301
    :headers {"location" (str (:sdmx-registry env) (:uri request))}
    :body {}})
 
-(defn schema [request]
+(defn structure [{uri :uri context :context query-string :query-string}]
   {:status 301
-   :headers {"location" (str (:sdmx-registry env) (:uri request))}
-   :body {}})
+   :headers {"location" (str (:sdmx-registry env) 
+                             (clojure.string/replace-first uri (re-pattern (str context "/sdmxapi")) "/sdmxapi/rest") 
+                             (if query-string (str "?" query-string)))}
+   :body "Redirecting..."})
 
-(defn other [request]
+(defn schema [{uri :uri context :context query-string :query-string}]
   {:status 301
-   :headers {"location" (str (:sdmx-registry env) (:uri request))}
-   :body {}})
+   :headers {"location" (str (:sdmx-registry env) 
+                             (clojure.string/replace-first uri (re-pattern (str context "/sdmxapi")) "/sdmxapi/rest") 
+                             (if query-string (str "?" query-string)))}
+   :body "Redirecting..."})
+
+(defn other [{uri :uri context :context query-string :query-string}]
+  {:status 301
+   :headers {"location" (str (:sdmx-registry env) 
+                             (clojure.string/replace-first uri (re-pattern (str context "/sdmxapi")) "/sdmxapi/rest") 
+                             (if query-string (str "?" query-string)))}
+   :body "Redirecting..."})

@@ -7,14 +7,14 @@
 
 (def system-config (ig/read-string (slurp (clojure.java.io/resource "config.edn"))))
 
-(def ring-handler (atom nil))
+(def app (atom nil))
 
-(defn handler [router] 
-  (@ring-handler router))
+(defn handler [request] 
+  (@app request))
 
 (defmethod ig/init-key :system/handler [_ {connection-pool :cp}]
-  (reset! ring-handler (reitit/handler connection-pool))
-  @ring-handler)
+  (reset! app (reitit/router connection-pool "/SpartaData"))
+  @app)
 
 (defmethod ig/init-key :system/connection-pool [_ _]
   (make-datasource {:datasource (.lookup (InitialContext.) "java:/comp/env/jdbc/SpartaData")}))

@@ -16,7 +16,7 @@
   (.stop server))
 
 (defmethod ig/init-key :system/handler [_ {connection-pool :cp}]
-  (reitit/handler connection-pool))
+  (reitit/router connection-pool nil))
 
 (defmethod ig/init-key :system/connection-pool [_ _]
   (make-datasource {:jdbc-url (:sdmx-postgres env)}))
