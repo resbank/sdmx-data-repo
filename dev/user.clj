@@ -4,8 +4,6 @@
             [integrant.core :as ig]
             [integrant.repl :as ig-repl]
             [ring.adapter.jetty :as jetty]
-            [ring.middleware.resource :refer [wrap-resource]]
-            [ring.middleware.file-info :refer [wrap-file-info]]
             [spartadata.routes :as reitit]))
 
 (def system-config (ig/read-string (slurp (clojure.java.io/resource "dev-config.edn"))))

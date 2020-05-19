@@ -33,7 +33,6 @@
          :init spartadata.application/start
          :destroy spartadata.application/stop}
 
-
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
@@ -43,6 +42,7 @@
                                           [ring/ring-jetty-adapter "1.8.0"]] 
                            :source-paths ["dev"]
                            :resource-paths ["dev/resources"]}
+             :test {:resource-paths ["test/resources"]}
              :profiles/dev {}
              :uberjar {:aot :all}}
 

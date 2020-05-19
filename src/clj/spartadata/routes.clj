@@ -11,8 +11,6 @@
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.ring.middleware.dev :as dev]
             [reitit.ring.spec :as spec]
-            [ring.util.response :as resp]
-            [ring.middleware.content-type :as content-type]
             [spec-tools.spell :as spell]
             [spartadata.handler.sdmxapi :as sdmx]
             [spartadata.sdmx.spec :refer :all]
@@ -281,7 +279,7 @@
          :config {:validatorUrl nil
                   :operationsSorter "alpha"}})
       (ring/create-resource-handler
-        {:path (str context "/")})
+        {:path (or context "/")})
       (ring/create-default-handler
         {:not-found (constantly {:status 404, :body "kosh"})
          :method-not-allowed (constantly {:status 405, :body "kosh"})
