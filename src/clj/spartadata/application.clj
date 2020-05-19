@@ -2,6 +2,8 @@
   (:require [environ.core :refer [env]]
             [hikari-cp.core :refer [make-datasource close-datasource]]
             [integrant.core :as ig]
+            [ring.middleware.resource :refer [wrap-resource]]
+            [ring.middleware.file-info :refer [wrap-file-info]]
             [spartadata.routes :as reitit])
   (:import [javax.naming InitialContext]))
 

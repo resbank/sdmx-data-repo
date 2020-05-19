@@ -11,6 +11,8 @@
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.ring.middleware.dev :as dev]
             [reitit.ring.spec :as spec]
+            [ring.util.response :as resp]
+            [ring.middleware.content-type :as content-type]
             [spec-tools.spell :as spell]
             [spartadata.handler.sdmxapi :as sdmx]
             [spartadata.sdmx.spec :refer :all]
@@ -274,10 +276,12 @@
         context (assoc :path context)))
     (ring/routes
       (swagger-ui/create-swagger-ui-handler
-        {:path (or context "/")
+        {:path (str context "/sdmxapi")
          :url (str context "/swagger.json")
          :config {:validatorUrl nil
                   :operationsSorter "alpha"}})
+      (ring/create-resource-handler
+        {:path (str context "/")})
       (ring/create-default-handler
         {:not-found (constantly {:status 404, :body "kosh"})
          :method-not-allowed (constantly {:status 405, :body "kosh"})
