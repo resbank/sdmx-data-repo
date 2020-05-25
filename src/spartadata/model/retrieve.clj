@@ -112,14 +112,14 @@
 
 (defmethod format-data-message "application/vnd.sdmx.compact+xml;version=2.0"
   [dataset-messages options]
-  (concat [(xml/element ::messg/CompactData {}
-                        (xml/element ::messg/Header {}
-                                     (xml/element ::messg/ID {} (str "IREF" (swap! message-counter inc)))
-                                     (xml/element ::messg/Test {} false)
-                                     (xml/element ::messg/Prepared {} (str (java-time/local-date-time)))
-                                     (xml/element ::messg/Sender {:id "SARB.ERD"})
-                                     (xml/element ::messg/Receiver {:id "ANONYMOUS"})))]
-          dataset-messages))
+  (xml/element ::messg/CompactData {}
+               (xml/element ::messg/Header {}
+                            (xml/element ::messg/ID {} (str "IREF" (swap! message-counter inc)))
+                            (xml/element ::messg/Test {} false)
+                            (xml/element ::messg/Prepared {} (str (java-time/local-date-time)))
+                            (xml/element ::messg/Sender {:id "SARB.ERD"})
+                            (xml/element ::messg/Receiver {:id "ANONYMOUS"}))
+               dataset-messages))
 
 
 
