@@ -1,10 +1,15 @@
 /target
 /classes
 /checkouts
+/resources/public/js/compiled
+/node_modules
 profiles.clj
 pom.xml
 pom.xml.asc
+package.json
+package-lock.json
 *.jar
 *.class
 /.lein-*
 /.nrepl-port
+/.shadow-cljs

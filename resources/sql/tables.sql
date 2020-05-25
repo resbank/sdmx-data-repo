@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS dataset;
 CREATE TABLE IF NOT EXISTS dataset_attribute (
   dataset_attribute_id SERIAL PRIMARY KEY,
   attr VARCHAR(50) NOT NULL,
-  val VARCHAR(50) NOT NULL,
+  val TEXT NOT NULL,
   dataset_id INT REFERENCES dataset(dataset_id) ON DELETE CASCADE,
   UNIQUE (attr, val, dataset_id)
 );
@@ -41,7 +41,7 @@ DROP TABLE IF EXISTS dataset_attribute;
 CREATE TABLE IF NOT EXISTS release (
   release_id SERIAL PRIMARY KEY,
   release TIMESTAMP NOT NULL,
-  description VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
   dataset_id INT REFERENCES dataset(dataset_id) ON DELETE CASCADE, 
   UNIQUE (release, dataset_id),
   UNIQUE (description, dataset_id)
@@ -111,7 +111,7 @@ DROP TABLE IF EXISTS series_dimension;
 CREATE TABLE IF NOT EXISTS series_attribute (
   series_attribute_id SERIAL PRIMARY KEY,
   attr VARCHAR(50) NOT NULL,
-  val VARCHAR(50) NOT NULL,
+  val TEXT NOT NULL,
   series_id INTEGER REFERENCES series(series_id) ON DELETE CASCADE,
   UNIQUE (attr, val, series_id)
 );
@@ -148,7 +148,7 @@ DROP TABLE IF EXISTS observation;
 CREATE TABLE IF NOT EXISTS observation_attribute (
   observation_attribute_id SERIAL PRIMARY KEY,
   attr VARCHAR(50) NOT NULL,
-  val VARCHAR(50) NOT NULL,
+  val TEXT NOT NULL,
   observation_id INTEGER REFERENCES observation(observation_id) ON DELETE CASCADE,
   UNIQUE (attr, val, observation_id)
 );

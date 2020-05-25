@@ -1,0 +1,6 @@
+{:source-paths ["src/cljc" "src/cljs"]
+ :dependencies [[re-frame "0.12.0"]]
+ :builds {:app {:target :browser
+                :output-dir "resources/public/js/compiled"
+                :asset-path "/js/compiled"
+                :modules {:app {:init-fn spartadata.core/render}}}}}

@@ -3,6 +3,7 @@
   :url "http://tst06350.resbank.co.za/Sparta/spartadata"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
+
   :dependencies [[clojure.java-time "0.3.2"]
                  [com.layerware/hugsql "0.4.9"]
                  [environ "1.1.0"]
@@ -18,22 +19,32 @@
                  [org.clojure/tools.logging "1.0.0"]
                  [org.postgresql/postgresql "42.2.6"]
                  [org.slf4j/slf4j-simple "1.7.21"]]
-  :repl-options {:init-ns user}
-  :main ^:skip-aot spartadata.application
+
   :plugins [[lein-environ "1.1.0"]
             [lein-ring "0.12.5"]]
+
+  :source-paths ["src/clj" "src/cljc"]
+
+  :test-paths ["test/clj" "test/cljc"]
+
+  :repl-options {:init-ns user}
+
   :ring {:handler spartadata.application/handler
          :init spartadata.application/start
          :destroy spartadata.application/stop}
-  :target-path "target/%s"
+
+  :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
+
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
+
   :profiles {:dev [:project/dev :profiles/dev]
-             :project/dev {:dependencies [[ring/ring-jetty-adapter "1.8.0"]
-                                          [integrant/repl "0.3.1"]] 
-                           :source-paths ["dev/spartadata"]
+             :project/dev {:dependencies [[integrant/repl "0.3.1"]
+                                          [ring/ring-jetty-adapter "1.8.0"]] 
+                           :source-paths ["dev"]
                            :resource-paths ["dev/resources"]}
-             :profiles/dev {}
              :test {:resource-paths ["test/resources"]}
+             :profiles/dev {}
              :uberjar {:aot :all}}
+
   :aliases {"initialise"  ["run" "-m" "spartadata.database.initialise/initialise"]
             "destroy"  ["run" "-m" "spartadata.database.destroy/destroy"]})

@@ -274,10 +274,12 @@
         context (assoc :path context)))
     (ring/routes
       (swagger-ui/create-swagger-ui-handler
-        {:path (or context "/")
+        {:path (str context "/sdmxapi")
          :url (str context "/swagger.json")
          :config {:validatorUrl nil
                   :operationsSorter "alpha"}})
+      (ring/create-resource-handler
+        {:path (or context "/")})
       (ring/create-default-handler
         {:not-found (constantly {:status 404, :body "kosh"})
          :method-not-allowed (constantly {:status 405, :body "kosh"})
