@@ -21,7 +21,7 @@
 (defn initialise []
   (let [db {:connection-uri (:sdmx-postgres env)}]
     (jdbc/with-db-transaction [tx db]
-      (create-intarray-extension tx)
+      ;(create-intarray-extension tx)
       (create-dataset-table tx)
       (create-dataset-attr-table tx)
       (create-release-table tx)
