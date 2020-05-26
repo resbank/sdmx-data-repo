@@ -174,20 +174,18 @@ GROUP BY series_and_dimensions_tmp.series_id, series_and_dimensions_tmp.dims, se
 -- :name get-obs
 -- :command :query
 -- :result :many
--- :doc Return observation.
-SELECT
-  max(created) AS latest_release, 
-  time_period::TEXT,
+-- :doc Return observations corresponding to a map of :series_id.
+SELECT DISTINCT ON (time_period) 
+  time_period::TEXT, 
   obs_value
 FROM observation
 WHERE series_id=:series_id
-GROUP BY time_period, obs_value
-ORDER BY time_period;
+ORDER BY time_period, created DESC;
 
 -- :name get-obs-following-release
 -- :command :query
 -- :result :many
--- :doc Return an observation from the requested series that follows the release in the map :release/:series_id.
+-- :doc Return observations from the requested series that follows the release in the map :release/:series_id.
 SELECT observation_id
 FROM observation
 WHERE series_id=:series_id
@@ -209,31 +207,29 @@ LIMIT 1;
 -- :command :query
 -- :result :many
 -- :doc Return the observations along with attributes corresponding to :series_id.
-SELECT
-  max(created) AS latest_release, 
+SELECT DISTINCT ON (observation.time_period) 
   observation.time_period::TEXT,
   observation.obs_value,
   array_agg(observation_attribute.attr) AS attrs,
   array_agg(observation_attribute.val) AS vals
 FROM observation
-LEFT JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
+INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
 WHERE observation.series_id=:series_id
-GROUP BY observation.time_period, observation.obs_value
-ORDER BY observation.time_period;
+GROUP BY observation.time_period, observation.obs_value, observation.created
+ORDER BY observation.time_period, observation.created DESC;
 
 -- :name get-obs-and-attrs-by-release
 -- :command :query
 -- :result :many
 -- :doc Return the observations along with attributes corresponding to :series_id/:release.
-SELECT
-  max(created) AS latest_release, 
+SELECT DISTINCT ON (observation.time_period) 
   observation.time_period::TEXT,
   observation.obs_value,
   array_agg(observation_attribute.attr) AS attrs,
   array_agg(observation_attribute.val) AS vals
 FROM observation
-LEFT JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
+INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
 WHERE observation.series_id=:series_id
 AND created <= :release::TIMESTAMP 
-GROUP BY observation.time_period, observation.obs_value
-ORDER BY observation.time_period;
+GROUP BY observation.time_period, observation.obs_value, observation.created
+ORDER BY observation.time_period, observation.created DESC;
