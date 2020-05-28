@@ -1,3 +1,6 @@
+(ns spartadata.common-test)
+
+(comment 
 (ns spartadata.common-test
   #? (:cljs (:require-macros [cljs.test :refer (is deftest testing)]))
   (:require [sparta-app.common :as sut]
@@ -5,4 +8,4 @@
                :cljs [cljs.test])))
 
 (deftest example-passing-test-cljc
-  (is (= 1 1)))
+  (is (= 1 1))))

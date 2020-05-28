@@ -125,30 +125,40 @@
                                            series-id)))
       series-id)))
 
-(defn upload-obs [db series-id components obs-zippers previous-release timestamp]
+(defn upload-obs [db series components obs-zippers previous-release timestamp]
   (jdbc/with-db-transaction [tx db]
-    (let [attrs (map (comp :attrs zip/node) obs-zippers)
-          time-periods (map :TIME_PERIOD attrs)
-          candidate-obs (zipmap time-periods attrs)
-          current-obs (#(select-keys (zipmap (map :time_period %) %) time-periods) (get-obs tx series-id))]
-      (doseq [obs (-> (fn [obs time-period {obs-value :OBS_VALUE}] 
-                        (let [candidate {:created timestamp
-                                         :time_period time-period
-                                         :obs_value (Double/parseDouble obs-value)
-                                         :series_id (:series_id series-id)}]
-                          (if-let [current (get obs time-period)]
-                            (if (> (Math/abs (- (:obs_value candidate) (:obs_value current))) (Math/ulp (:obs_value current)))
-                              (if (java-time/before? (java-time/local-date-time (:latest_release current)) (java-time/local-date-time previous-release))
-                                (assoc obs time-period candidate)
-                                (assoc-in obs [time-period :obs_value] (:obs_value candidate)))
-                              (dissoc obs time-period))
-                            (assoc obs time-period candidate))))
-                      (reduce-kv current-obs candidate-obs)
-                      vals)]
-        (let [obs-id (upsert-obs tx obs)]
-          (upsert-obs-attributes tx {:attrs (for [attribute (get candidate-obs (:time_period obs))
-                                                  :when (contains? (:attributes components) (name (key attribute)))]
-                                              [(name (key attribute)) (val attribute) (:observation_id obs-id)])}))))))
+    (let [observations (get-obs-and-attrs tx series)
+          previous-release (-> (java-time/local-date-time previous-release) (java-time/plus (java-time/millis 1)))]
+      (doseq [candidate (map (comp :attrs zip/node) obs-zippers)
+              :let [time-period (:TIME_PERIOD candidate)
+                    obs-value (Double/parseDouble (:OBS_VALUE candidate))
+                    attrs (-> candidate (dissoc :TIME_PERIOD) (dissoc :OBS_VALUE))]]
+        (if-let [current (first (filter #(= time-period (:time_period %)) observations))]
+          (if (> (Math/abs (- obs-value (:obs_value current))) (Math/ulp (:obs_value current)))
+            (if (java-time/before? (java-time/local-date-time (:created current)) previous-release)
+              ;; Observation value has changed and current observation is released => create new observation with attributes
+              (let [{obs-id :observation_id} (upsert-obs tx {:created timestamp 
+                                                             :time_period time-period 
+                                                             :obs_value obs-value 
+                                                             :series_id (:series_id series)})]
+                (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) obs-id])}))
+              ;; Observation value has changed but current observation is not released => update observation (and attributes if necessary)
+              (do (upsert-obs tx (assoc current :obs_value obs-value))
+                  (let [current-attrs (zipmap (mapv keyword (.getArray (:attrs current))) (into [] (.getArray (:vals current))))]
+                    (if-not (= current-attrs attrs)
+                      (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) (:observation_id current)])})))))
+            ;; Observation value has not changed => update attributes if necessary
+            (let [current-attrs (zipmap (mapv keyword (.getArray (:attrs current))) (into [] (.getArray (:vals current))))]
+                    (if-not (= current-attrs attrs)
+                      (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) (:observation_id current)])}))))
+          ;; Observation did not previously exist => create new observation with attributes
+          (let [{obs-id :observation_id} (upsert-obs tx {:created timestamp 
+                                                         :time_period time-period 
+                                                         :obs_value obs-value 
+                                                         :series_id (:series_id series)})]
+              (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) obs-id])})))))))
+
+
 
 ;; Upload data message (including historical data)
 

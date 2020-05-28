@@ -176,8 +176,10 @@ GROUP BY series_and_dimensions_tmp.series_id, series_and_dimensions_tmp.dims, se
 -- :result :many
 -- :doc Return observations corresponding to a map of :series_id.
 SELECT DISTINCT ON (time_period) 
+  created, 
   time_period::TEXT, 
-  obs_value
+  obs_value,
+  series_id
 FROM observation
 WHERE series_id=:series_id
 ORDER BY time_period, created DESC;
@@ -208,14 +210,22 @@ LIMIT 1;
 -- :result :many
 -- :doc Return the observations along with attributes corresponding to :series_id.
 SELECT DISTINCT ON (observation.time_period) 
+  observation.observation_id,
+  observation.created, 
   observation.time_period::TEXT,
   observation.obs_value,
+  observation.series_id,
   array_agg(observation_attribute.attr) AS attrs,
   array_agg(observation_attribute.val) AS vals
 FROM observation
 INNER JOIN observation_attribute ON observation_attribute.observation_id=observation.observation_id
 WHERE observation.series_id=:series_id
-GROUP BY observation.time_period, observation.obs_value, observation.created
+GROUP BY 
+  observation.observation_id, 
+  observation.created, 
+  observation.time_period, 
+  observation.obs_value,
+  observation.series_id
 ORDER BY observation.time_period, observation.created DESC;
 
 -- :name get-obs-and-attrs-by-release

@@ -136,16 +136,16 @@
 (defmulti format-dataset (fn [db dataset dimensions options] (:format options)))
 
 (defmethod format-dataset "application/json"
-  [db {attr-values :attr-values attrs :attrs :as dataset} dimensions options]
-  (merge (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray attr-values))) {})
+  [db {attrs :attrs values :vals :as dataset} dimensions options]
+  (merge (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) {})
          {:Series (retrieve-series db dataset dimensions options)}))
 
 (defmethod format-dataset "application/vnd.sdmx.compact+xml;version=2.0"
-  [db {attr-values :attr-values attrs :attrs :as dataset} dimensions {[agencyid id version] :dataflow :as options}]
+  [db {attrs :attrs values :vals :as dataset} dimensions {[agencyid id version] :dataflow :as options}]
   (let [ns1 (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")]
     (apply xml/element 
            (concat [(xml/qname ns1 "DataSet") 
-                    (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray attr-values))) {})
+                    (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) {})
                     (retrieve-series db dataset dimensions (assoc options :ns1 ns1))]))))
 
 (defmethod format-dataset :default

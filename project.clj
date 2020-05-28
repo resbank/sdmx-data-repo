@@ -42,7 +42,8 @@
                                           [ring/ring-jetty-adapter "1.8.0"]] 
                            :source-paths ["dev"]
                            :resource-paths ["dev/resources"]}
-             :test {:resource-paths ["test/resources"]}
+             :test {:dependencies [[clj-http "3.10.1"]] 
+                    :resource-paths ["test/resources"]}
              :profiles/dev {}
              :uberjar {:aot :all}}
 
