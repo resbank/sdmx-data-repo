@@ -60,14 +60,16 @@
 
 (s/def ::data-rollback-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
-(s/def ::latest boolean?)
+(s/def ::newest boolean?)
+(s/def ::oldest boolean?)
 (s/def ::after (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
 (s/def ::before (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
 (s/def ::description string?)
+(s/def ::includes string?)
 
 (s/def ::data-release-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
-(s/def ::data-release-query-params (s/keys :opt-un [::latest ::after ::before ::description]))
+(s/def ::data-release-query-params (s/keys :opt-un [::newest ::oldest ::after ::before ::includes ::description]))
 
 ;; Structural metadata spec
 

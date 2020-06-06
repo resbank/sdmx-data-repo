@@ -4,7 +4,8 @@
             [spartadata.model.retrieve :refer [retrieve-data-message]]
             [spartadata.model.upload :refer [upload-data-message upload-historical-data-message]]
             [spartadata.model.rollback :refer [rollback-release]]
-            [spartadata.model.enquire :refer [fetch-release]]))
+            [spartadata.model.enquire :refer [fetch-release]]
+            [spartadata.sdmx.errors :refer [sdmx-response]]))
 
 
 
@@ -34,21 +35,7 @@
                                                                                           "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
                                                                                           (get headers "accept")))))
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (-> (cond 
-          (= 100 (:error data-message)) {:status 404}
-          (= 110 (:error data-message)) {:status 401}
-          (= 130 (:error data-message)) {:status 413}
-          (= 140 (:error data-message)) {:status 400}
-          (= 150 (:error data-message)) {:status 403}
-          (= 500 (:error data-message)) {:status 500}
-          (= 501 (:error data-message)) {:status 501}
-          (= 503 (:error data-message)) {:status 503}
-          (= 510 (:error data-message)) {:status 413}
-          (= 1000 (:error data-message)) {:status 500}
-          (< 1000 (:error data-message)) {:status 500}
-          :else {:status 200})
-        (assoc :headers {"content-type" (:content-type data-message)})
-        (assoc :body (:content data-message)))))
+    (sdmx-response data-message)))
 
 (defn data-upload [connection-pool {headers :headers {path-params :path query-params :query multipart :multipart} :parameters}]
   (let [data-message (try (upload-data-message {:datasource connection-pool} 
@@ -59,21 +46,7 @@
                                                                                         "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
                                                                                         (get headers "accept"))))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (-> (cond 
-          (= 100 (:error data-message)) {:status 404}
-          (= 110 (:error data-message)) {:status 401}
-          (= 130 (:error data-message)) {:status 413}
-          (= 140 (:error data-message)) {:status 400}
-          (= 150 (:error data-message)) {:status 403}
-          (= 500 (:error data-message)) {:status 500}
-          (= 501 (:error data-message)) {:status 501}
-          (= 503 (:error data-message)) {:status 503}
-          (= 510 (:error data-message)) {:status 413}
-          (= 1000 (:error data-message)) {:status 500}
-          (< 1000 (:error data-message)) {:status 500}
-          :else {:status 200})
-        (assoc :headers {"content-type" (:content-type data-message)})
-        (assoc :body (:content data-message)))))
+    (sdmx-response data-message)))
 
 (defn data-upload-hist [connection-pool {headers :headers {path-params :path query-params :query multipart :multipart} :parameters}]
   (let [data-message (try (upload-historical-data-message {:datasource connection-pool} 
@@ -84,21 +57,7 @@
                                                                                                    "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
                                                                                                    (get headers "accept"))))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (-> (cond 
-          (= 100 (:error data-message)) {:status 404}
-          (= 110 (:error data-message)) {:status 401}
-          (= 130 (:error data-message)) {:status 413}
-          (= 140 (:error data-message)) {:status 400}
-          (= 150 (:error data-message)) {:status 403}
-          (= 500 (:error data-message)) {:status 500}
-          (= 501 (:error data-message)) {:status 501}
-          (= 503 (:error data-message)) {:status 503}
-          (= 510 (:error data-message)) {:status 413}
-          (= 1000 (:error data-message)) {:status 500}
-          (< 1000 (:error data-message)) {:status 500}
-          :else {:status 200})
-        (assoc :headers {"content-type" (:content-type data-message)})
-        (assoc :body (:content data-message)))))
+    (sdmx-response data-message)))
 
 (defn data-rollback [connection-pool request]
   {:status 201
@@ -107,11 +66,13 @@
               (catch Exception e (do (.printStackTrace e) (throw e))))})
 
 (defn data-releases [connection-pool request]
-  {:status 200
-   :body (try (fetch-release {:datasource connection-pool} 
-                             (get-in request [:parameters :path])
-                             (get-in request [:parameters :query])) 
-              (catch Exception e (do (.printStackTrace e) (throw e))))})
+  (let [data-message (try (fetch-release {:datasource connection-pool} 
+                                         (get-in request [:parameters :path])
+                                         (get-in request [:parameters :query])) 
+                          (catch Exception e (do (.printStackTrace e) (throw e))))]
+    (sdmx-response data-message)))
+
+
 
 ;; Redirects to Fusion Registry
 

@@ -80,11 +80,11 @@
                   :handler (partial sdmx/data-rollback connection-pool)}}]
 
          ["/availablereleases/{agency-id}/{resource-id}/{version}"
-          {:post {:tags ["Data and Metadata Queries"]
-                  :summary "SDMX data release query"
-                  :parameters {:path :spartadata.sdmx.spec/data-release-path-params
-                               :query :spartadata.sdmx.spec/data-release-query-params}
-                  :handler (partial sdmx/data-releases connection-pool)}}]]
+          {:get {:tags ["Data and Metadata Queries"]
+                 :summary "SDMX data release query"
+                 :parameters {:path :spartadata.sdmx.spec/data-release-path-params
+                              :query :spartadata.sdmx.spec/data-release-query-params}
+                 :handler (partial sdmx/data-releases connection-pool)}}]]
 
         ["/metadata/{flow-ref}/{key}/{provider-ref}"
          {:get {:tags ["Data and Metadata Queries"]

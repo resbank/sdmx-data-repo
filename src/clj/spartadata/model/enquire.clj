@@ -1,38 +1,46 @@
 (ns spartadata.model.enquire
-  (:require [clojure.java.jdbc :as jdbc]
-            [hugsql.core :as sql]))
+  (:require [clojure.data.xml :as xml]
+            [hugsql.core :as sql]
+            [spartadata.sdmx.errors :refer [sdmx-error]]
+            [spartadata.sdmx.util :refer [levenshtein-distance]]))
 
-(defn lev [[a & s] [b & t]]
-  (cond
-    (empty? s) (count t)
-    (empty? t) (count s)
-    :else (if (= a b)
-            (lev s t)
-            (->> [(lev (cons a s) t) (lev s (cons b t)) (lev s t)]
-                 (apply min )
-                 (+ 1)))))
 
-(defn levenshtein-distance [s t]
-  "Calculate the edit distance between two strings (Wagner–Fischer algorithm)"
-  ;; Iterate over the input string (columns)
-  (loop [index (map inc (range (count s)))
-         col (range (inc (count t)))]
-    (if-not index
-      (last col)
-      (recur (next index) 
-             ;; Iterate over the target string (rows)
-             (loop [[b & t] t
-                    [head & remain] col
-                    a (nth s (dec (first index)))
-                    next-col [(first index)]]
-               (if (empty? remain)
-                 next-col
-                 (recur t 
-                        remain 
-                        a 
-                        (conj next-col
-                              (min (+ (last next-col) 1) 
-                                   (+ (first remain) 1)
-                                   (+ head (if (= a b) 0 1)))))))))))
 
-(defn fetch-release [])
+;; Import needed SQL functions
+
+
+(sql/def-db-fns "sql/query.sql")
+
+
+
+;; Retrieve releases
+
+
+(defn fetch-release [db dataflow {newest :newest oldest :oldest after :after before :before includes :includes description :description}]
+  (let [{agencyid :agency-id id :resource-id version :version} dataflow
+        dataset (get-dataset db {:agencyid agencyid :id id :version version})]
+    (if dataset
+      (let [releases (cond->> (get-releases db dataset)
+                       before (filter #(java-time/before? (java-time/local-date-time (:release %)) (java-time/local-date-time) before))
+                       after (filter #(java-time/after? (java-time/local-date-time (:release %)) (java-time/local-date-time after)))
+                       includes (filter #(clojure.string/includes? (:description %) includes)))]
+        (if (empty? releases)
+          {:error 100
+           :content-type "application/xml"
+           :content (xml/emit-str (sdmx-error 100 "No results found."))}
+          {:error 0
+           :content-type "application/xml"
+           :content (xml/emit-str (xml/element :Releases {}
+                                               (for [release (cond 
+                                                               newest [(first releases)]
+                                                               oldest [(last releases)]
+                                                               description [(first (sort-by #(levenshtein-distance (:description %) description) < releases))]
+                                                               :else releases)]
+                                                 (xml/element :Release {:Description (:description release) :Date (:release release)}))))}))
+      {:error 100
+       :content-type "application/xml"
+       :content (xml/emit-str (sdmx-error 100 (str "No data exist for query: Target: Dataflow"
+                                                   " - Agency Id: " agencyid 
+                                                   " - Maintainable Id: " id
+                                                   " - Version: " version)))})))
+
