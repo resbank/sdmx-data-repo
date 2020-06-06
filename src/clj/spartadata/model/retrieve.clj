@@ -7,6 +7,7 @@
             [java-time]
             [jsonista.core :as json]
             [spartadata.sdmx.errors :refer [sdmx-error]]
+            [spartadata.sdmx.util :refer [levenshtein-distance]]
             [spartadata.sdmx.validate :refer [validate-data]]))
 
 
@@ -132,7 +133,18 @@
         :let [[agencyid id version] dataflow
               dataset (get-dataset-and-attrs db {:agencyid agencyid :id id :version version})]
         :when dataset]
-    (format-dataset db dataset dimensions (assoc options :dataflow dataflow))))
+    (if-let [description (:releaseDescription options)]
+      (let [release (-> (sort-by #(levenshtein-distance (:description %) description) < (get-releases db dataset))
+                        first 
+                        :release
+                        java-time/local-date-time
+                        str)]
+        (format-dataset db dataset dimensions (-> options 
+                                                  (assoc :dataflow dataflow)
+                                                  (assoc :release release))))
+      (format-dataset db dataset dimensions (-> options 
+                                              (assoc :dataflow dataflow)
+                                              (dissoc :release))))))
 
 (defmulti format-dataset (fn [db dataset dimensions options] (:format options)))
 

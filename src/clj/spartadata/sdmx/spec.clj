@@ -38,13 +38,13 @@
 (s/def ::includeHistory boolean?)
 
 (s/def ::format string?)
-(s/def ::release (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
+(s/def ::releaseDescription string?)
 (s/def ::validate boolean?)
 
 (s/def ::data-query-params 
   (s/keys :opt-un [::startPeriod ::endPeriod ::updatedAfter ::firstNObservations 
                    ::lastNObservations ::dimensionAtObservation ::dataDetailType
-                   ::includeHistory ::release ::validate ::format]))
+                   ::includeHistory ::releaseDescription ::validate ::format]))
 
 (s/def ::agency-id (s/and string? #(re-matches nc-name-id-type  %)))
 (s/def ::resource-id (s/and string? #(re-matches id-type  %)))
@@ -52,7 +52,7 @@
 
 (s/def ::data-upload-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
-(s/def ::releaseDescription string?)
+(s/def ::release (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
 
 (s/def ::data-upload-query-params (s/keys :opt-un [::releaseDescription ::validate]))
 
