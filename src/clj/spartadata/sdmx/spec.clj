@@ -60,6 +60,15 @@
 
 (s/def ::data-rollback-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
+(s/def ::latest boolean?)
+(s/def ::after (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
+(s/def ::before (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
+(s/def ::description string?)
+
+(s/def ::data-release-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+
+(s/def ::data-release-query-params (s/keys :opt-un [::latest ::after ::before ::description]))
+
 ;; Structural metadata spec
 
 (s/def ::nested-agency-id (s/and string? #(re-matches nested-nc-name-id-type  %)))

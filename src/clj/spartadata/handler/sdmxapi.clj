@@ -3,7 +3,8 @@
             [environ.core :refer [env]]
             [spartadata.model.retrieve :refer [retrieve-data-message]]
             [spartadata.model.upload :refer [upload-data-message upload-historical-data-message]]
-            [spartadata.model.rollback :refer [rollback-release]]))
+            [spartadata.model.rollback :refer [rollback-release]]
+            [spartadata.model.enquire :refer [fetch-release]]))
 
 
 
@@ -105,7 +106,12 @@
                                 (get-in request [:parameters :path])) 
               (catch Exception e (do (.printStackTrace e) (throw e))))})
 
-
+(defn data-releases [connection-pool request]
+  {:status 200
+   :body (try (fetch-release {:datasource connection-pool} 
+                             (get-in request [:parameters :path])
+                             (get-in request [:parameters :query])) 
+              (catch Exception e (do (.printStackTrace e) (throw e))))})
 
 ;; Redirects to Fusion Registry
 

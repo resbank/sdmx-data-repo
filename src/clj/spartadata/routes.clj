@@ -34,48 +34,57 @@
 
        ["/sdmxapi" 
 
-        ["/data/{flow-ref}"
-         {:get {:tags ["Data and Metadata Queries"]
-                :summary "SDMX data query"
-                :parameters {:path :spartadata.sdmx.spec/data-path-params-1
-                             :query :spartadata.sdmx.spec/data-query-params}
-                :handler (partial sdmx/data connection-pool)}}]
+        ["/data"
 
-        ["/data/{flow-ref}/{key}"
-         {:get {:tags ["Data and Metadata Queries"]
-                :summary "SDMX data query"
-                :parameters {:path :spartadata.sdmx.spec/data-path-params-2
-                             :query :spartadata.sdmx.spec/data-query-params}
-                :handler (partial sdmx/data connection-pool)}}]
+         ["/{flow-ref}"
+          {:get {:tags ["Data and Metadata Queries"]
+                 :summary "SDMX data query"
+                 :parameters {:path :spartadata.sdmx.spec/data-path-params-1
+                              :query :spartadata.sdmx.spec/data-query-params}
+                 :handler (partial sdmx/data connection-pool)}}]
 
-        ["/data/{flow-ref}/{key}/{provider-ref}"
-         {:get {:tags ["Data and Metadata Queries"]
-                :summary "SDMX data query"
-                :parameters {:path :spartadata.sdmx.spec/data-path-params-3
-                             :query :spartadata.sdmx.spec/data-query-params}
-                :handler (partial sdmx/data connection-pool)}}]
+         ["/{flow-ref}/{key}"
+          {:get {:tags ["Data and Metadata Queries"]
+                 :summary "SDMX data query"
+                 :parameters {:path :spartadata.sdmx.spec/data-path-params-2
+                              :query :spartadata.sdmx.spec/data-query-params}
+                 :handler (partial sdmx/data connection-pool)}}]
 
-        ["/data/upload/{agency-id}/{resource-id}/{version}"
-         {:post {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX data post"
-                 :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
-                              :query :spartadata.sdmx.spec/data-upload-query-params
-                              :multipart {:file multipart/temp-file-part}}
-                 :handler (partial sdmx/data-upload connection-pool)}}]
+         ["/{flow-ref}/{key}/{provider-ref}"
+          {:get {:tags ["Data and Metadata Queries"]
+                 :summary "SDMX data query"
+                 :parameters {:path :spartadata.sdmx.spec/data-path-params-3
+                              :query :spartadata.sdmx.spec/data-query-params}
+                 :handler (partial sdmx/data connection-pool)}}]
 
-        ["/data/upload/historical/{agency-id}/{resource-id}/{version}"
-         {:post {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX historical data post"
-                 :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
-                              :query :spartadata.sdmx.spec/data-upload-hist-query-params
-                              :multipart {:file multipart/temp-file-part}}
-                 :handler (partial sdmx/data-upload-hist connection-pool)}}]
+         ["/upload/{agency-id}/{resource-id}/{version}"
+          {:post {:tags ["Data and Metadata Queries"]
+                  :summary "SDMX data post"
+                  :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
+                               :query :spartadata.sdmx.spec/data-upload-query-params
+                               :multipart {:file multipart/temp-file-part}}
+                  :handler (partial sdmx/data-upload connection-pool)}}]
 
-        ["/data/rollback/{agency-id}/{resource-id}/{version}"
-         {:post {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX data rollback post"
-                 :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
-                 :handler (partial sdmx/data-rollback connection-pool)}}]
+         ["/upload/historical/{agency-id}/{resource-id}/{version}"
+          {:post {:tags ["Data and Metadata Queries"]
+                  :summary "SDMX historical data post"
+                  :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
+                               :query :spartadata.sdmx.spec/data-upload-hist-query-params
+                               :multipart {:file multipart/temp-file-part}}
+                  :handler (partial sdmx/data-upload-hist connection-pool)}}]
+
+         ["/rollback/{agency-id}/{resource-id}/{version}"
+          {:post {:tags ["Data and Metadata Queries"]
+                  :summary "SDMX data rollback post"
+                  :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
+                  :handler (partial sdmx/data-rollback connection-pool)}}]
+
+         ["/availablereleases/{agency-id}/{resource-id}/{version}"
+          {:post {:tags ["Data and Metadata Queries"]
+                  :summary "SDMX data release query"
+                  :parameters {:path :spartadata.sdmx.spec/data-release-path-params
+                               :query :spartadata.sdmx.spec/data-release-query-params}
+                  :handler (partial sdmx/data-releases connection-pool)}}]]
 
         ["/metadata/{flow-ref}/{key}/{provider-ref}"
          {:get {:tags ["Data and Metadata Queries"]
@@ -252,7 +261,7 @@
                              :query :spartadata.sdmx.spec/schema-query-params}
                 :handler sdmx/schema}}]
 
-        ["/other/{flow-ref}/{key}/{provider-ref}/{component-id}"
+        ["/availableconstraint/{flow-ref}/{key}/{provider-ref}/{component-id}"
          {:get {:swagger {:tags ["Other Queries"]}
                 :summary "SDMX metadata query"
                 :parameters {:path :spartadata.sdmx.spec/other-path-params
