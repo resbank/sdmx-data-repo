@@ -21,7 +21,7 @@
         dataset (get-dataset db {:agencyid agencyid :id id :version version})]
     (if dataset
       (let [releases (cond->> (get-releases db dataset)
-                       before (filter #(java-time/before? (java-time/local-date-time (:release %)) (java-time/local-date-time) before))
+                       before (filter #(java-time/before? (java-time/local-date-time (:release %)) (java-time/local-date-time before)))
                        after (filter #(java-time/after? (java-time/local-date-time (:release %)) (java-time/local-date-time after)))
                        includes (filter #(clojure.string/includes? (:description %) includes)))]
         (if (empty? releases)
