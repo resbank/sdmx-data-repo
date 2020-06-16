@@ -39,7 +39,9 @@
 
   If release? evaluates to 'true' the upload is considered to be the final version of the data preceding the next release. 
   A description of the data release may be provided"
-  (if validate? (validate-data dataflow data-message options))
+  (if validate? (let [result (validate-data dataflow data-message (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0"))]
+                  (if result
+                    (throw (Exception. (xml/emit-str result))))))
   (with-open [data-message (clojure.java.io/input-stream data-message)] 
     (let [{agencyid :agency-id id :resource-id version :version} dataflow
           data-zipper (-> data-message xml/parse zip/xml-zip)
