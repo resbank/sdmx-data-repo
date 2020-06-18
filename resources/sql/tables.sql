@@ -94,7 +94,7 @@ DROP TABLE IF EXISTS series;
 -- :doc Create series_dimension table, if it doesn't already exist.
 CREATE TABLE IF NOT EXISTS series_dimension (
   series_id INT REFERENCES series(series_id) ON DELETE CASCADE,
-  dimension_id INT REFERENCES dimension(dimension_id),
+  dimension_id INT REFERENCES dimension(dimension_id) ON DELETE CASCADE,
   PRIMARY KEY (series_id, dimension_id)
 );
 
