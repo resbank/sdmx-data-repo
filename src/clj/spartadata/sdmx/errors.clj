@@ -21,6 +21,10 @@
 ;; 1000 Validation failed
 ;; 1001 Validation not supported
 ;; 1002 Format not supported
+;; 1003 Upload failed
+;; 1004 Method not allowed
+;; 1005 Not Acceptable
+
 
 
 ;; Error message generating function

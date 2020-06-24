@@ -1,5 +1,6 @@
 (ns spartadata.routes
-  (:require [reitit.ring :as ring]
+  (:require [clojure.data.xml :as xml]
+            [reitit.ring :as ring]
             [reitit.coercion.spec]
             [reitit.swagger :as swagger]
             [reitit.swagger-ui :as swagger-ui]
@@ -13,11 +14,9 @@
             [reitit.ring.spec :as spec]
             [spec-tools.spell :as spell]
             [spartadata.handler.sdmxapi :as sdmx]
+            [spartadata.sdmx.errors :refer [sdmx-error]]
             [spartadata.sdmx.spec :refer :all]
-            [muuntaja.core :as m]
-            [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.spec.alpha :as s]))
+            [muuntaja.core :as m]))
 
 
 
@@ -290,6 +289,6 @@
       (ring/create-resource-handler
         {:path (or context "/")})
       (ring/create-default-handler
-        {:not-found (constantly {:status 404, :body "kosh"})
-         :method-not-allowed (constantly {:status 405, :body "kosh"})
-         :not-acceptable (constantly {:status 406, :body "kosh"})}))))
+        {:not-found (constantly {:status 404, :body (xml/emit-str (sdmx-error 100 "No results found."))})
+         :method-not-allowed (constantly {:status 405, :body (xml/emit-str (sdmx-error 1004 "Method not allowed."))})
+         :not-acceptable (constantly {:status 406, :body (xml/emit-str (sdmx-error 1006 "Not Acceptable."))})}))))
