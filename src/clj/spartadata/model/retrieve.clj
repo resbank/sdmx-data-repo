@@ -42,22 +42,32 @@
 (declare retrieve-observations)
 (declare format-observation)
 
+(defn resolve-dataflows [dataflow datasets]
+  (->> (for [agencyid (if (some #(= "all" %) (:agencyid dataflow)) 
+                        (map :agencyid datasets) 
+                        (:agencyid dataflow))] 
+         (for [id (if (some #(= "all" %) (:id dataflow)) 
+                    (map :id datasets) 
+                    (:id dataflow))] 
+           (for [version (if (some #(= "all" %) (:version dataflow)) 
+                           (map :version datasets) 
+                           (if (some #(= "latest" %) (:version dataflow)) 
+                             (:version (first datasets)) 
+                             (:version dataflow)))] 
+             [agencyid id version])))
+       (reduce concat)
+       (reduce concat)))
+
 (defn retrieve-data-message
   [db {dataflow :flow-ref dimensions :key unused :provider-ref} {validate? :validate :or {validate? false} :as options}]
   (let [datasets (get-datasets db)
-        dataflows (->> (for [agencyid (if (some #(= "all" %) (:agencyid dataflow)) (map :agencyid datasets) (:agencyid dataflow))] 
-                         (for [id (if (some #(= "all" %) (:id dataflow)) (map :id datasets) (:id dataflow))] 
-                           (for [version (if (some #(= "all" %) (:version dataflow)) (map :version datasets) 
-                                           (if (some #(= "latest" %) (:version dataflow)) (:version (first datasets)) (:version dataflow)))] 
-                             [agencyid id version])))
-                       (reduce concat)
-                       (reduce concat)) 
+        dataflows (resolve-dataflows dataflow datasets) 
         data-message (compile-data-message db dataflows dimensions options)]
     (if (= "Error" (name (or (:tag data-message) :nil))) 
       (format-response data-message options)
       (if validate? 
-        (if (not= 1 (count dataflows))
-          (if-let [validation-error (validate-data (first dataflows) (xml/emit-str data-message) options)]
+        (if (= 1 (count dataflows))
+          (if-let [validation-error (validate-data (first dataflows) data-message options)]
             (format-response validation-error options)
             (format-response data-message options))
           (format-response (sdmx-error 1001 "Validation not supported. Multiple dataflows/structures") options))

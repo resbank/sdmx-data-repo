@@ -39,39 +39,39 @@
 
   If release? evaluates to 'true' the upload is considered to be the final version of the data preceding the next release. 
   A description of the data release may be provided"
-  (if validate? (let [result (validate-data dataflow data-message (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0"))]
-                  (if result
-                    (throw (Exception. (xml/emit-str result))))))
-  (with-open [data-message (clojure.java.io/input-stream data-message)] 
-    (let [{agencyid :agency-id id :resource-id version :version} dataflow
-          data-zipper (-> data-message xml/parse zip/xml-zip)
-          components (get-components agencyid id version)
-          ns1  (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")
-          dataset-id (upload-dataset db dataflow (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
-          previous-release (get (or (get-latest-release db dataset-id)
-                                    (insert-release db (merge {:release "0001-01-01T00:00:00" 
-                                                               :description "Initial release"} 
-                                                              dataset-id)))
-                                :release)
-          timestamp (java-time/sql-timestamp)]
-      (if (java-time/after? (java-time/local-date-time previous-release) (java-time/local-date-time))
-        (throw (Exception. (str "Next release must follow the previous release chronologically." 
-                                "Suggested action: rollback releases until before current time."))))
-      (loop [series-zippers (zip-xml/xml-> data-zipper (xml/qname ns1 "DataSet") (xml/qname ns1 "Series"))
-             series-uploaded #{}]
-        (if series-zippers
-          (let [series-zipper (first series-zippers)
-                series-id (upload-series db dataset-id (:series components) series-zipper)]
-            (if (not (contains? series-uploaded series-id))
-              (future (upload-obs db series-id (:obs components) (zip-xml/xml-> series-zipper (xml/qname ns1 "Obs")) previous-release timestamp)))
-            (recur (next series-zippers) (conj series-uploaded series-id)))))
-      (if release-description
-        (insert-release db (merge {:release timestamp 
-                                   :description release-description} 
-                                  dataset-id)))
-      {:error 0
-       :content-type "text/plain"
-       :content "Data upload complete."})))
+  (let [{agencyid :agency-id id :resource-id version :version} dataflow]
+    (if validate? (let [result (validate-data [agencyid id version] data-message (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0"))]
+                    (if result
+                      (throw (Exception. (xml/emit-str result))))))
+    (with-open [data-message (clojure.java.io/input-stream data-message)] 
+      (let [data-zipper (-> data-message xml/parse zip/xml-zip)
+            components (get-components agencyid id version)
+            ns1  (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")
+            dataset-id (upload-dataset db dataflow (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
+            previous-release (get (or (get-latest-release db dataset-id)
+                                      (insert-release db (merge {:release "0001-01-01T00:00:00" 
+                                                                 :description "Initial release"} 
+                                                                dataset-id)))
+                                  :release)
+            timestamp (java-time/sql-timestamp)]
+        (if (java-time/after? (java-time/local-date-time previous-release) (java-time/local-date-time))
+          (throw (Exception. (str "Next release must follow the previous release chronologically." 
+                                  "Suggested action: rollback releases until before current time."))))
+        (loop [series-zippers (zip-xml/xml-> data-zipper (xml/qname ns1 "DataSet") (xml/qname ns1 "Series"))
+               series-uploaded #{}]
+          (if series-zippers
+            (let [series-zipper (first series-zippers)
+                  series-id (upload-series db dataset-id (:series components) series-zipper)]
+              (if (not (contains? series-uploaded series-id))
+                (future (upload-obs db series-id (:obs components) (zip-xml/xml-> series-zipper (xml/qname ns1 "Obs")) previous-release timestamp)))
+              (recur (next series-zippers) (conj series-uploaded series-id)))))
+        (if release-description
+          (insert-release db (merge {:release timestamp 
+                                     :description release-description} 
+                                    dataset-id)))
+        {:error 0
+         :content-type "text/plain"
+         :content "Data upload complete."}))))
 
 (defn get-components [agencyid id version]
   (let [components-zipper (-> (slurp (str (:sdmx-registry env) "/sdmxapi/rest/datastructure/" agencyid  "/" id "/" version "?format=sdmx-2.0")) 
@@ -174,37 +174,37 @@
   Historical data is data that contains previously released data that has yet to be uploaded. It requires that the next release be specified, 
   with the further requirement that it must follow chronologically from the previous release - but must be before the current time. A description 
   of the release may also be specified. This function is used for initialising the database, don't use it unless you are sure of how it works."
-  (if validate? (validate-data dataflow data-message options))
-  (with-open [data-message (clojure.java.io/input-stream data-message)]
-    (let [{agencyid :agency-id id :resource-id version :version} dataflow
-          data-zipper (-> data-message xml/parse zip/xml-zip)
-          components (get-components agencyid id version)
-          ns1  (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")
-          dataset-id (upload-dataset db dataflow (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
-          previous-release (get (or (get-latest-release db dataset-id)
-                                    (insert-release db (merge {:release "0001-01-01T00:00:00" 
-                                                               :description "Initial release"} 
-                                                              dataset-id)))
-                                :release)]
-      (if (= (java-time/local-date-time next-release) (java-time/local-date-time previous-release))
-        (println "Historical data upload failed. Release already exists.")
-        (do
-          (if (java-time/after? (java-time/local-date-time previous-release) (java-time/local-date-time next-release))
-            (throw (Exception.  "Historical data upload failed. Upload release date can't precede the release date of the previous release.")))
-          (if (get-obs-following-release-by-dataset db (assoc dataset-id :release next-release))
-            (throw (Exception.  "Historical data upload failed. Upload release date can't precede the creation date of the existing data.")))
-          (loop [series-zippers (zip-xml/xml-> data-zipper (xml/qname ns1 "DataSet") (xml/qname ns1 "Series"))
-                 series-uploaded #{}]
-            (if series-zippers
-              (let [series-zipper (first series-zippers)
-                    series-id (upload-series db dataset-id (:series components) series-zipper)]
-                (if (not (contains? series-uploaded series-id))
-                  (future (upload-obs db series-id (:obs components) (zip-xml/xml-> series-zipper (xml/qname ns1 "Obs")) previous-release next-release)))
-                (recur (next series-zippers) (conj series-uploaded series-id)))))
+  (let [{agencyid :agency-id id :resource-id version :version} dataflow]
+    (if validate? (validate-data [agencyid id version] data-message options))
+    (with-open [data-message (clojure.java.io/input-stream data-message)]
+      (let [data-zipper (-> data-message xml/parse zip/xml-zip)
+            components (get-components agencyid id version)
+            ns1  (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")
+            dataset-id (upload-dataset db dataflow (:dataset components) (zip-xml/xml1-> data-zipper (xml/qname ns1 "DataSet")))
+            previous-release (get (or (get-latest-release db dataset-id)
+                                      (insert-release db (merge {:release "0001-01-01T00:00:00" 
+                                                                 :description "Initial release"} 
+                                                                dataset-id)))
+                                  :release)]
+        (if (= (java-time/local-date-time next-release) (java-time/local-date-time previous-release))
+          (println "Historical data upload failed. Release already exists.")
+          (do
+            (if (java-time/after? (java-time/local-date-time previous-release) (java-time/local-date-time next-release))
+              (throw (Exception.  "Historical data upload failed. Upload release date can't precede the release date of the previous release.")))
+            (if (get-obs-following-release-by-dataset db (assoc dataset-id :release next-release))
+              (throw (Exception.  "Historical data upload failed. Upload release date can't precede the creation date of the existing data.")))
+            (loop [series-zippers (zip-xml/xml-> data-zipper (xml/qname ns1 "DataSet") (xml/qname ns1 "Series"))
+                   series-uploaded #{}]
+              (if series-zippers
+                (let [series-zipper (first series-zippers)
+                      series-id (upload-series db dataset-id (:series components) series-zipper)]
+                  (if (not (contains? series-uploaded series-id))
+                    (future (upload-obs db series-id (:obs components) (zip-xml/xml-> series-zipper (xml/qname ns1 "Obs")) previous-release next-release)))
+                  (recur (next series-zippers) (conj series-uploaded series-id)))))
 
-          (insert-release db (merge {:release next-release 
-                                     :description (str release-description)} 
-                                    dataset-id))
-          {:error 0
-           :content-type "text/plain"
-           :content "Historical data upload complete."})))))
+            (insert-release db (merge {:release next-release 
+                                       :description (str release-description)} 
+                                      dataset-id))
+            {:error 0
+             :content-type "text/plain"
+             :content "Historical data upload complete."}))))))

@@ -1,5 +1,6 @@
 (ns spartadata.sdmx.validate
-  (:require [clojure.java.io :as io]
+  (:require [clojure.data.xml :as xml]
+            [clojure.java.io :as io]
             [environ.core :refer [env]]
             [spartadata.sdmx.errors :refer [sdmx-error]])
   (:import [javax.xml XMLConstants transform.Source transform.stream.StreamSource validation.SchemaFactory validation.Schema validation.Validator]
@@ -32,7 +33,7 @@
 
 
 (defmethod validate-data "application/vnd.sdmx.compact+xml;version=2.0"
-  [{agencyid :agency-id id :resource-id version :version} data-message opts]
+  [[agencyid id version] data-message opts]
   (let [dataflow (str (:sdmx-registry env) "/sdmxapi/rest/schema/dataflow/" agencyid  "/" id "/" version "?format=sdmx-2.0")]
     (with-open [message (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXMessage.xsd"))
                 structure (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXStructure.xsd"))
@@ -46,7 +47,10 @@
                 generic-metadata (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXGenericMetadata.xsd"))
                 metadata-report (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXMetadataReport.xsd"))
                 xml (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/xml.xsd"))
-                data-message (if (string? data-message) (clojure.java.io/reader (char-array data-message)) (clojure.java.io/input-stream data-message))]
+                data-message (cond
+                               (string? data-message) (clojure.java.io/reader (char-array data-message))
+                               (instance? clojure.data.xml.node.Element data-message) (clojure.java.io/reader (char-array (xml/emit-str data-message)))
+                               :else (clojure.java.io/input-stream data-message))]
       (validate-xml (into-array [(StreamSource. xml)
                                  (StreamSource. common)
                                  (StreamSource. structure)
