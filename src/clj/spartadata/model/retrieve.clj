@@ -43,20 +43,20 @@
 (declare format-observation)
 
 (defn resolve-dataflows [dataflow datasets]
-  (->> (for [agencyid (if (some #(= "all" %) (:agencyid dataflow)) 
-                        (map :agencyid datasets) 
-                        (:agencyid dataflow))] 
-         (for [id (if (some #(= "all" %) (:id dataflow)) 
-                    (map :id datasets) 
-                    (:id dataflow))] 
-           (for [version (if (some #(= "all" %) (:version dataflow)) 
-                           (map :version datasets) 
-                           (if (some #(= "latest" %) (:version dataflow)) 
-                             (:version (first datasets)) 
-                             (:version dataflow)))] 
-             [agencyid id version])))
-       (reduce concat)
-       (reduce concat)))
+  (reduce concat 
+          (for [agencyid (if (some #(= "all" %) (:agencyid dataflow)) 
+                           (map :agencyid datasets) 
+                           (:agencyid dataflow))] 
+            (reduce concat 
+                    (for [id (if (some #(= "all" %) (:id dataflow)) 
+                               (map :id datasets) 
+                               (:id dataflow))] 
+                      (for [version (if (some #(= "all" %) (:version dataflow)) 
+                                      (map :version datasets) 
+                                      (if (some #(= "latest" %) (:version dataflow)) 
+                                        (:version (first datasets)) 
+                                        (:version dataflow)))] 
+                        [agencyid id version]))))))
 
 (defn retrieve-data-message
   [db {dataflow :flow-ref dimensions :key unused :provider-ref} {validate? :validate :or {validate? false} :as options}]
