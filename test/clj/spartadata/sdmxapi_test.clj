@@ -6,10 +6,18 @@
             [clojure.zip :as zip]
             [user]))
 
+
+
 ;; XML namespace
+
+
 (xml/alias-uri 'ns1 "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=SARB.ERD:TEST(1.0):compact")
 
-;; Helper function to compare time series observations
+
+
+;; Helper functions
+
+
 (defn get-test-obs [xml-data dim1 dim2] 
   "Return the time series observations contained in the XML data looked up along the given dimensions"
   (->> (zip-xml/xml-> xml-data 
@@ -24,10 +32,19 @@
                (assoc % :OBS_VALUE (Double/parseDouble (:OBS_VALUE %)))
                (identity %)))))
 
-;; Constants
+
+
+;; Globals
+
+
 (def agencyid "SARB.ERD")
 (def id "TEST")
 (def version "1.0")
+
+
+
+;; Test suite
+
 
 (deftest sdmx-api
 
