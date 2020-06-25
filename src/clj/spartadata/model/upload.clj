@@ -103,10 +103,13 @@
                             (into #{}))}}))
 
 (defn upload-dataset [db dataflow components dataset-zipper]
-  (let [dataset (clojure.set/rename-keys dataflow {:agency-id :agencyid :resource-id :id})]
+  (println (contains? (:attributes components) "RELEASE"))
+  (let [has_release_attr? (contains? (:attributes components) "RELEASE")
+        components (update components :attributes #(clojure.set/difference % #{"RELEASE"}))
+        dataset (clojure.set/rename-keys dataflow {:agency-id :agencyid :resource-id :id})]
     (jdbc/with-db-transaction [tx db]
       (let [dataset-id (or (get-dataset tx dataset)
-                           (insert-dataset tx dataset))]
+                           (insert-dataset tx (assoc dataset :has_release_attr has_release_attr?)))]
         (doseq [attribute (:attrs (zip/node dataset-zipper))
                 :when (contains? (:attributes components) (name (key attribute)))]
           (upsert-dataset-attribute tx (merge {:attr (name (key attribute))

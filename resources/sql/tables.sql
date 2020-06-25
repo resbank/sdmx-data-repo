@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS dataset (
   agencyid VARCHAR(50),
   id VARCHAR(50),
   version VARCHAR(5),
+  has_release_attr BOOLEAN DEFAULT FALSE,
   UNIQUE (agencyid, id, version)
 );
 

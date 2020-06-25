@@ -144,23 +144,31 @@
               dataset (get-dataset-and-attrs db {:agencyid agencyid :id id :version version})]
         :when dataset]
     (if-let [description (:releaseDescription options)]
-      (let [release (-> (sort-by #(levenshtein-distance (:description %) description) < (get-releases db dataset))
-                        first 
-                        :release
-                        java-time/local-date-time
-                        str)]
+      (let [release (first (sort-by #(levenshtein-distance (:description %) description) < (get-releases db dataset)))]
         (format-dataset db dataset dimensions (-> options 
                                                   (assoc :dataflow dataflow)
-                                                  (assoc :release release))))
+                                                  (assoc :releaseDescription (:description release))
+                                                  (assoc :release (-> release
+                                                                      :release
+                                                                      java-time/local-date-time
+                                                                      str)))))
       (format-dataset db dataset dimensions (-> options 
                                               (assoc :dataflow dataflow)
+                                              (dissoc :releaseDescription)
                                               (dissoc :release))))))
 
 (defmulti format-dataset (fn [db dataset dimensions options] (:format options)))
 
 (defmethod format-dataset "application/json"
   [db {attrs :attrs values :vals :as dataset} dimensions options]
-  (merge (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) {})
+  (merge (if (:has_release_attr dataset)
+           (if (contains? options :releaseDescription) 
+             {:RELEASE (:releaseDescription options)}
+             {:RELEASE "Unreleased"}) 
+           {})
+         (if (first (.getArray attrs)) 
+           (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
+           {})
          {:Series (retrieve-series db dataset dimensions options)}))
 
 (defmethod format-dataset "application/vnd.sdmx.compact+xml;version=2.0"
@@ -168,7 +176,14 @@
   (let [ns1 (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")]
     (apply xml/element 
            (concat [(xml/qname ns1 "DataSet") 
-                    (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) {})
+                    (merge (if (:has_release_attr dataset)
+                             (if (contains? options :releaseDescription) 
+                               {:RELEASE (:releaseDescription options)}
+                               {:RELEASE "Unreleased"}) 
+                             {})
+                           (if (first (.getArray attrs)) 
+                             (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
+                             {}))
                     (retrieve-series db dataset dimensions (assoc options :ns1 ns1))]))))
 
 (defmethod format-dataset :default

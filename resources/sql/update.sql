@@ -2,8 +2,8 @@
 -- :command :query
 -- :result :one
 -- :doc Insert and return dataset record.
-INSERT INTO dataset (agencyid, id, version)
-VALUES (:agencyid, :id, :version) 
+INSERT INTO dataset (agencyid, id, version, has_release_attr)
+VALUES (:agencyid, :id, :version, :has_release_attr) 
 RETURNING dataset_id;
 
 -- :name upsert-dataset-attribute

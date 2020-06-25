@@ -23,6 +23,7 @@ AND version = :version;
 -- :doc Return the observations along with attributes corresponding to :series_id.
 SELECT
   dataset.dataset_id,
+  dataset.has_release_attr,
   array_agg(dataset_attribute.attr) AS attrs,
   array_agg(dataset_attribute.val) AS vals
 FROM dataset
