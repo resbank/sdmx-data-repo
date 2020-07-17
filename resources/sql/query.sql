@@ -1,10 +1,13 @@
+--------------------------------------------------------------------------------
+-- DATA QUERIES
+--------------------------------------------------------------------------------
+
 -- :name get-datasets
 -- :command :query
--- :result :one
--- :doc Return all datasets, ordered (descending) by version.
+-- :result :many
+-- :doc Return all datasets.
 SELECT *
-FROM dataset
-ORDER BY version DESC;
+FROM dataset;
 
 -- :name get-dataset
 -- :command :query
@@ -244,3 +247,32 @@ WHERE observation.series_id=:series_id
 AND created <= :release::TIMESTAMP 
 GROUP BY observation.time_period, observation.obs_value, observation.created
 ORDER BY observation.time_period, observation.created DESC;
+
+--------------------------------------------------------------------------------
+-- AUTHORISATION QUERIES
+--------------------------------------------------------------------------------
+
+-- :name get-user
+-- :command :query
+-- :result :one
+-- :doc Return user information corresponding to the supplied :username.
+SELECT *
+FROM authentication
+WHERE username=:username;
+
+-- :name get-dataset-roles
+-- :command :query
+-- :result :many
+-- :doc Return the data set roles for a given :user_id & :dataset_id.
+SELECT *
+FROM role
+WHERE user_id=:user_id
+AND dataset_id=:dataset_id;
+
+-- :name get-providers
+-- :command
+-- :many
+-- :doc Return the provider IDs registered to the given :user_id.
+SELECT * 
+FROM provider
+WHERE user_id=:user_id;

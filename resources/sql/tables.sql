@@ -1,3 +1,7 @@
+--------------------------------------------------------------------------------
+-- DATA TABLES
+--------------------------------------------------------------------------------
+
 -- :name create-dataset-table
 -- :command :execute
 -- :result :raw
@@ -159,3 +163,39 @@ CREATE TABLE IF NOT EXISTS observation_attribute (
 -- :result :raw
 -- :doc Drop observation_attribute table, if it exists.
 DROP TABLE IF EXISTS observation_attribute;
+
+--------------------------------------------------------------------------------
+-- AUTHORISATION TABLES
+--------------------------------------------------------------------------------
+
+-- :name create-authentication-table
+-- :command :execute
+-- :result :raw
+-- :doc Create authentication table, if it doesn't already exist.
+CREATE TABLE IF NOT EXISTS authentication (
+  user_id SERIAL PRIMARY KEY, 
+  username VARCHAR(50) UNIQUE NOT NULL CHECK (username=upper(username)),
+  password VARCHAR(50) NOT NULL
+);
+
+-- :name create-role-table
+-- :command :execute
+-- :result :raw
+-- :doc Create data set roles table, if it doesn't already exist.
+CREATE TABLE IF NOT EXISTS role (
+  role VARCHAR(5) DEFAULT 'user' NOT NULL,
+  user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE,
+  dataset_id INTEGER REFERENCES dataset(dataset_id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, dataset_id)
+);
+
+-- :name create-provider-table
+-- :command :execute
+-- :result :raw
+-- :doc Create data providers table, if it doesn't already exist.
+CREATE TABLE IF NOT EXISTS provider (
+  provider_id SERIAL PRIMARY KEY,
+  agencyid VARCHAR(50),
+  id VARCHAR(50),
+  user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE
+);

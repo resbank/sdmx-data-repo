@@ -1,5 +1,6 @@
 (ns spartadata.routes
-  (:require [clojure.data.xml :as xml]
+  (:require [buddy.auth.accessrules :refer [restrict]]
+            [clojure.data.xml :as xml]
             [reitit.ring :as ring]
             [reitit.coercion.spec]
             [reitit.swagger :as swagger]
@@ -13,6 +14,7 @@
             [reitit.ring.middleware.dev :as dev]
             [reitit.ring.spec :as spec]
             [spec-tools.spell :as spell]
+            [spartadata.auth :as auth]
             [spartadata.handler.sdmxapi :as sdmx]
             [spartadata.sdmx.errors :refer [sdmx-error]]
             [spartadata.sdmx.spec :refer :all]
@@ -28,33 +30,43 @@
     (ring/router
       [["/swagger.json"
         {:get {:no-doc true
-               :swagger {:info {:title "SDMX Rest API"}}
+               :swagger {:info {:title "SDMX Rest API"}
+                         :securityDefinitions {:basicAuth {:type "basic"
+                                                           :name "Authorization"
+                                                           :in "header"}}}
                :handler (swagger/create-swagger-handler)}}]
 
        ["/sdmxapi" 
 
-        ["/data"
+        ["/data" {:swagger {:security [{:basicAuth []}]}
+                  :middleware [[auth/authentication (auth/backend connection-pool)]]}
 
          ["/{flow-ref}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data query"
                  :parameters {:path :spartadata.sdmx.spec/data-path-params-1
                               :query :spartadata.sdmx.spec/data-query-params}
-                 :handler (partial sdmx/data connection-pool)}}]
+                 :handler (restrict (partial sdmx/data connection-pool) 
+                                    {:handler (partial auth/data-query connection-pool) 
+                                     :on-error auth/on-error})}}]
 
          ["/{flow-ref}/{key}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data query"
                  :parameters {:path :spartadata.sdmx.spec/data-path-params-2
                               :query :spartadata.sdmx.spec/data-query-params}
-                 :handler (partial sdmx/data connection-pool)}}]
+                 :handler (restrict (partial sdmx/data connection-pool)
+                                    {:handler (partial auth/data-query connection-pool)
+                                     :on-error auth/on-error})}}]
 
          ["/{flow-ref}/{key}/{provider-ref}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data query"
                  :parameters {:path :spartadata.sdmx.spec/data-path-params-3
                               :query :spartadata.sdmx.spec/data-query-params}
-                 :handler (partial sdmx/data connection-pool)}}]
+                 :handler (restrict (partial sdmx/data connection-pool)
+                                    {:handler (partial auth/data-query connection-pool)
+                                     :on-error auth/on-error})}}]
 
          ["/upload/{agency-id}/{resource-id}/{version}"
           {:post {:tags ["Data and Metadata Queries"]
@@ -62,7 +74,9 @@
                   :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
                                :query :spartadata.sdmx.spec/data-upload-query-params
                                :multipart {:file multipart/temp-file-part}}
-                  :handler (partial sdmx/data-upload connection-pool)}}]
+                  :handler (restrict (partial sdmx/data-upload connection-pool)
+                                     {:handler (partial auth/should-be-owner connection-pool)
+                                      :on-error auth/on-error})}}]
 
          ["/upload/historical/{agency-id}/{resource-id}/{version}"
           {:post {:tags ["Data and Metadata Queries"]
@@ -70,20 +84,26 @@
                   :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
                                :query :spartadata.sdmx.spec/data-upload-hist-query-params
                                :multipart {:file multipart/temp-file-part}}
-                  :handler (partial sdmx/data-upload-hist connection-pool)}}]
+                  :handler (restrict (partial sdmx/data-upload-hist connection-pool)
+                                     {:handler (partial auth/should-be-admin connection-pool)
+                                      :on-error auth/on-error })}}]
 
          ["/rollback/{agency-id}/{resource-id}/{version}"
           {:post {:tags ["Data and Metadata Queries"]
                   :summary "SDMX data rollback post"
                   :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
-                  :handler (partial sdmx/data-rollback connection-pool)}}]
+                  :handler (restrict (partial sdmx/data-rollback connection-pool)
+                                     {:handler (partial auth/should-be-owner connection-pool)
+                                      :on-error auth/on-error })}}]
 
          ["/availablereleases/{agency-id}/{resource-id}/{version}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data release query"
                  :parameters {:path :spartadata.sdmx.spec/data-release-path-params
                               :query :spartadata.sdmx.spec/data-release-query-params}
-                 :handler (partial sdmx/data-releases connection-pool)}}]]
+                 :handler (restrict (partial sdmx/data-releases connection-pool)
+                                    {:handler auth/should-be-authenticated
+                                     :on-error auth/on-error})}}]]
 
         ["/metadata/{flow-ref}/{key}/{provider-ref}"
          {:get {:tags ["Data and Metadata Queries"]
