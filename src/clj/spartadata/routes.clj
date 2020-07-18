@@ -12,10 +12,9 @@
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.ring.middleware.dev :as dev]
-            [reitit.ring.spec :as spec]
-            [spec-tools.spell :as spell]
-            [spartadata.auth :as auth]
             [spartadata.handler.sdmxapi :as sdmx]
+            [spartadata.middleware.auth :as auth]
+            [spartadata.middleware.data-query-resolution :refer [resolve-data-query]]
             [spartadata.sdmx.errors :refer [sdmx-error]]
             [spartadata.sdmx.spec :refer :all]
             [muuntaja.core :as m]))
@@ -44,28 +43,31 @@
          ["/{flow-ref}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data query"
+                 :middleware [[resolve-data-query connection-pool]]
                  :parameters {:path :spartadata.sdmx.spec/data-path-params-1
                               :query :spartadata.sdmx.spec/data-query-params}
                  :handler (restrict (partial sdmx/data connection-pool) 
-                                    {:handler (partial auth/data-query connection-pool) 
+                                    {:handler auth/data-query 
                                      :on-error auth/on-error})}}]
 
          ["/{flow-ref}/{key}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data query"
+                 :middleware [[resolve-data-query connection-pool]]
                  :parameters {:path :spartadata.sdmx.spec/data-path-params-2
                               :query :spartadata.sdmx.spec/data-query-params}
                  :handler (restrict (partial sdmx/data connection-pool)
-                                    {:handler (partial auth/data-query connection-pool)
+                                    {:handler auth/data-query
                                      :on-error auth/on-error})}}]
 
          ["/{flow-ref}/{key}/{provider-ref}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data query"
+                 :middleware [[resolve-data-query connection-pool]]
                  :parameters {:path :spartadata.sdmx.spec/data-path-params-3
                               :query :spartadata.sdmx.spec/data-query-params}
                  :handler (restrict (partial sdmx/data connection-pool)
-                                    {:handler (partial auth/data-query connection-pool)
+                                    {:handler auth/data-query
                                      :on-error auth/on-error})}}]
 
          ["/upload/{agency-id}/{resource-id}/{version}"
