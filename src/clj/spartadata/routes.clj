@@ -98,14 +98,31 @@
                                      {:handler (partial auth/should-be-owner connection-pool)
                                       :on-error auth/on-error })}}]
 
-         ["/availablereleases/{agency-id}/{resource-id}/{version}"
+         ["/releases/{agency-id}/{resource-id}/{version}"
           {:get {:tags ["Data and Metadata Queries"]
                  :summary "SDMX data release query"
-                 :parameters {:path :spartadata.sdmx.spec/data-release-path-params
-                              :query :spartadata.sdmx.spec/data-release-query-params}
+                 :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
+                              :query :spartadata.sdmx.spec/data-releases-query-params}
                  :handler (restrict (partial sdmx/data-releases connection-pool)
                                     {:handler auth/should-be-authenticated
-                                     :on-error auth/on-error})}}]]
+                                     :on-error auth/on-error})}}]
+
+        ["/release/{agency-id}/{resource-id}/{version}"
+         {:post {:tags ["Data and Metadata Queries"]
+                 :summary "SDMX data release dataset"
+                 :parameters {:path :spartadata.sdmx.spec/data-release-path-params
+                              :query :spartadata.sdmx.spec/data-release-query-params}
+                 :handler (restrict (partial sdmx/data-release connection-pool)
+                                    {:handler (partial auth/should-be-owner connection-pool)
+                                     :on-error auth/on-error})}}]
+
+        ["/delete/{agency-id}/{resource-id}/{version}"
+         {:delete {:tags ["Data and Metadata Queries"]
+                   :summary "SDMX data delete dataset"
+                   :parameters {:path :spartadata.sdmx.spec/data-delete-path-params}
+                   :handler (restrict (partial sdmx/data-delete connection-pool)
+                                      {:handler (partial auth/should-be-admin connection-pool)
+                                       :on-error auth/on-error})}}]]
 
         ["/metadata/{flow-ref}/{key}/{provider-ref}"
          {:get {:tags ["Data and Metadata Queries"]

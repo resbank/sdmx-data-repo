@@ -1,6 +1,8 @@
 (ns spartadata.handler.sdmxapi
   (:require [clojure.data.xml :as xml]
             [environ.core :refer [env]]
+            [spartadata.model.delete :refer [delete-dataset]]
+            [spartadata.model.release :refer [add-release]]
             [spartadata.model.retrieve :refer [retrieve-data-message]]
             [spartadata.model.upload :refer [upload-data-message upload-historical-data-message]]
             [spartadata.model.rollback :refer [rollback-release]]
@@ -72,7 +74,21 @@
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 
+(defn data-release [connection-pool request]
+  (let [data-message (try (add-release {:datasource connection-pool} 
+                                       (-> (get-in request [:parameters :path])
+                                           (clojure.set/rename-keys {:agency-id :agencyid :resource-id :id}))
+                                       (-> (get-in request [:parameters :query])
+                                           (clojure.set/rename-keys {:releaseDescription :description}))) 
+                          (catch Exception e (do (.printStackTrace e) (throw e))))]
+    (sdmx-response data-message)))
 
+(defn data-delete [connection-pool request]
+  (let [data-message (try (delete-dataset {:datasource connection-pool} 
+                                          (-> (get-in request [:parameters :path])
+                                              (clojure.set/rename-keys {:agency-id :agencyid :resource-id :id}))) 
+                          (catch Exception e (do (.printStackTrace e) (throw e))))]
+    (sdmx-response data-message)))
 
 ;; Redirects to Fusion Registry
 

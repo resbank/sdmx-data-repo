@@ -62,14 +62,19 @@
 
 (s/def ::newest boolean?)
 (s/def ::oldest boolean?)
-(s/def ::after (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
-(s/def ::before (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
-(s/def ::description string?)
-(s/def ::includes string?)
+(s/def ::afterDateTime (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
+(s/def ::beforeDateTime (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
+(s/def ::includesText string?)
+
+(s/def ::data-releases-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+
+(s/def ::data-releases-query-params (s/keys :opt-un [::newest ::oldest ::afterDateTime ::beforeDateTime ::includesText ::releaseDescription]))
 
 (s/def ::data-release-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
-(s/def ::data-release-query-params (s/keys :opt-un [::newest ::oldest ::after ::before ::includes ::description]))
+(s/def ::data-release-query-params (s/keys :req-un [::releaseDescription]))
+
+(s/def ::data-delete-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
 
 ;; Structural metadata spec
 
