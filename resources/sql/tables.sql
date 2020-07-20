@@ -2,6 +2,7 @@
 -- DATA TABLES
 --------------------------------------------------------------------------------
 
+
 -- :name create-dataset-table
 -- :command :execute
 -- :result :raw
@@ -164,9 +165,12 @@ CREATE TABLE IF NOT EXISTS observation_attribute (
 -- :doc Drop observation_attribute table, if it exists.
 DROP TABLE IF EXISTS observation_attribute;
 
+
+
 --------------------------------------------------------------------------------
 -- AUTHORISATION TABLES
 --------------------------------------------------------------------------------
+
 
 -- :name create-authentication-table
 -- :command :execute
@@ -175,7 +179,11 @@ DROP TABLE IF EXISTS observation_attribute;
 CREATE TABLE IF NOT EXISTS authentication (
   user_id SERIAL PRIMARY KEY, 
   username VARCHAR(50) UNIQUE NOT NULL CHECK (username=upper(username)),
-  password VARCHAR(50) NOT NULL
+  password VARCHAR(50) NOT NULL,
+  firstname VARCHAR(50) NOT NULL,
+  lastname  VARCHAR(50) NOT NULL,
+  email TEXT NOT NULL,
+  is_admin BOOLEAN DEFAULT FALSE NOT NULL
 );
 
 -- :name create-role-table
@@ -183,7 +191,7 @@ CREATE TABLE IF NOT EXISTS authentication (
 -- :result :raw
 -- :doc Create data set roles table, if it doesn't already exist.
 CREATE TABLE IF NOT EXISTS role (
-  role VARCHAR(5) DEFAULT 'user' NOT NULL,
+  role ROLE_ENUM DEFAULT 'user' NOT NULL,
   user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE,
   dataset_id INTEGER REFERENCES dataset(dataset_id) ON DELETE CASCADE,
   PRIMARY KEY (user_id, dataset_id)
@@ -198,4 +206,35 @@ CREATE TABLE IF NOT EXISTS provider (
   agencyid VARCHAR(50),
   id VARCHAR(50),
   user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE
+);
+
+
+
+--------------------------------------------------------------------------------
+-- LOG TABLES
+--------------------------------------------------------------------------------
+
+
+-- :name create-dataset-log-table
+-- :command :execute
+-- :result :raw
+-- :doc Create table that logs changes to datasets by user ID, if it doesn't already exist.
+CREATE TABLE IF NOT EXISTS dataset_log (
+  log_id SERIAL PRIMARY KEY,
+  action ACTION_ENUM NOT NULL,
+  modified TIMESTAMP DEFAULT current_timestamp NOT NULL,
+  user_id INTEGER REFERENCES authentication(user_id),
+  dataset_id INTEGER REFERENCES dataset(dataset_id)
+);
+
+-- :name create-usr-log-table
+-- :command :execute
+-- :result :raw
+-- :doc Create table that logs changes to users by user ID, if it doesn't already exist.
+CREATE TABLE IF NOT EXISTS usr_log (
+  log_id SERIAL PRIMARY KEY,
+  action USR_ACTION_ENUM NOT NULL,
+  modified TIMESTAMP DEFAULT current_timestamp NOT NULL,
+  admin_user_id INTEGER REFERENCES authentication(user_id),
+  target_user_id  INTEGER REFERENCES authentication(user_id)
 );
