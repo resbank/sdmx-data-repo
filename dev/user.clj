@@ -1,12 +1,13 @@
 (ns user
-  (:require [environ.core :refer [env]]
+  (:require [clojure.java.io :as io] 
+            [environ.core :refer [env]]
             [hikari-cp.core :refer [make-datasource close-datasource]]
             [integrant.core :as ig]
             [integrant.repl :as ig-repl]
             [ring.adapter.jetty :as jetty]
             [spartadata.routes :as reitit]))
 
-(def system-config (ig/read-string (slurp (clojure.java.io/resource "dev-config.edn"))))
+(def system-config (ig/read-string (slurp (io/resource "dev-config.edn"))))
 
 (defmethod ig/init-key :system/jetty [_ {:keys [port join? handler]}]
   (println "server running on port: " port)
