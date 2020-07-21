@@ -15,6 +15,7 @@
 (def key-type #"([\w@\$\-]+(\+[\w@\$\-]+)*)?(\.([\w@\$\-]+(\+[\w@\$\-]+)*)?)*")
 (def provider-ref-type #"([A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*(\+[A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*)*\,)?[\w@\$\-]+(\+[\w@\$\-]+)*")
 (def flow-ref-type #"([\w@\$\-]+(\+[\w@\$\-]+)*|([A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*(\+[A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*)*(\,[\w@\$\-]+(\+[\w@\$\-]+)*)(\,(all|latest|\d+(\.\d+)*(\+\d+(\.\d+)*)*))?))")
+(def strict-flow-ref-type (re-pattern (str nc-name-id-type "\\," id-type "\\," version-type)))
 
 ;; Specs for API end points
 
@@ -50,7 +51,9 @@
 (s/def ::resource-id (s/and string? #(re-matches id-type  %)))
 (s/def ::version (s/and string? #(re-matches version-type  %)))
 
-(s/def ::data-upload-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+(s/def ::strict-flow-ref (s/and string? #(re-matches strict-flow-ref-type  %)))
+
+(s/def ::data-upload-path-params (s/keys :req-un [::strict-flow-ref]))
 
 (s/def ::releaseDateTime (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
 
@@ -58,7 +61,7 @@
 
 (s/def ::data-upload-hist-query-params (s/keys :req-un [::releaseDateTime ::releaseDescription ] :opt-un [::validate]))
 
-(s/def ::data-rollback-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+(s/def ::data-rollback-path-params (s/keys :req-un [::strict-flow-ref]))
 
 (s/def ::newest boolean?)
 (s/def ::oldest boolean?)
@@ -66,15 +69,15 @@
 (s/def ::beforeDateTime (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
 (s/def ::includesText string?)
 
-(s/def ::data-releases-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+(s/def ::data-releases-path-params (s/keys :req-un [::strict-flow-ref]))
 
 (s/def ::data-releases-query-params (s/keys :opt-un [::newest ::oldest ::afterDateTime ::beforeDateTime ::includesText ::releaseDescription]))
 
-(s/def ::data-release-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+(s/def ::data-release-path-params (s/keys :req-un [::strict-flow-ref]))
 
 (s/def ::data-release-query-params (s/keys :req-un [::releaseDescription]))
 
-(s/def ::data-delete-path-params (s/keys :req-un [::agency-id ::resource-id ::version]))
+(s/def ::data-delete-path-params (s/keys :req-un [::strict-flow-ref]))
 
 ;; Structural metadata spec
 

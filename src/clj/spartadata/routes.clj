@@ -1,6 +1,5 @@
 (ns spartadata.routes
-  (:require [buddy.auth.accessrules :refer [restrict]]
-            [clojure.data.xml :as xml]
+  (:require [clojure.data.xml :as xml]
             [reitit.ring :as ring]
             [reitit.coercion.spec]
             [reitit.swagger :as swagger]
@@ -14,6 +13,7 @@
             [reitit.ring.middleware.dev :as dev]
             [spartadata.handler.sdmxapi :as sdmx]
             [spartadata.middleware.auth :as auth]
+            [spartadata.middleware.conn :refer [conn]]
             [spartadata.middleware.data-query-resolution :refer [resolve-data-query]]
             [spartadata.sdmx.errors :refer [sdmx-error]]
             [spartadata.sdmx.spec :refer :all]
@@ -27,284 +27,91 @@
 (defn router [connection-pool context]
   (ring/ring-handler
     (ring/router
-      [["/swagger.json"
-        {:get {:no-doc true
-               :swagger {:info {:title "SDMX Rest API"}
-                         :securityDefinitions {:basicAuth {:type "basic"
-                                                           :name "Authorization"
-                                                           :in "header"}}}
-               :handler (swagger/create-swagger-handler)}}]
+      [["/sdmxapi" 
 
-       ["/sdmxapi" 
+        ["/swagger.json"
+         {:get {:no-doc true
+                :swagger {:info {:title "SDMX Rest API"}
+                          :securityDefinitions {:basicAuth {:type "basic"
+                                                            :name "Authorization"
+                                                            :in "header"}}}
+                :handler (swagger/create-swagger-handler)}}]
 
-        ["/data" {:swagger {:security [{:basicAuth []}]}
-                  :middleware [[auth/authentication (auth/backend connection-pool)]]}
+        ["" {:swagger {:security [{:basicAuth []}]}
+             :middleware [[auth/authentication (auth/backend connection-pool)]]}
 
-         ["/{flow-ref}"
-          {:get {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX data query"
-                 :middleware [[resolve-data-query connection-pool]]
-                 :parameters {:path :spartadata.sdmx.spec/data-path-params-1
-                              :query :spartadata.sdmx.spec/data-query-params}
-                 :handler (restrict (partial sdmx/data connection-pool) 
-                                    {:handler auth/data-query 
-                                     :on-error auth/on-error})}}]
+          ["/data" {:middleware [resolve-data-query 
+                                 auth/authorisation]}
 
-         ["/{flow-ref}/{key}"
-          {:get {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX data query"
-                 :middleware [[resolve-data-query connection-pool]]
-                 :parameters {:path :spartadata.sdmx.spec/data-path-params-2
-                              :query :spartadata.sdmx.spec/data-query-params}
-                 :handler (restrict (partial sdmx/data connection-pool)
-                                    {:handler auth/data-query
-                                     :on-error auth/on-error})}}]
+           ["/{flow-ref}"
+            {:get {:tags ["Data"]
+                   :summary "Data set"
+                   :parameters {:path :spartadata.sdmx.spec/data-path-params-1
+                                :query :spartadata.sdmx.spec/data-query-params}
+                   :handler sdmx/data}}]
 
-         ["/{flow-ref}/{key}/{provider-ref}"
-          {:get {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX data query"
-                 :middleware [[resolve-data-query connection-pool]]
-                 :parameters {:path :spartadata.sdmx.spec/data-path-params-3
-                              :query :spartadata.sdmx.spec/data-query-params}
-                 :handler (restrict (partial sdmx/data connection-pool)
-                                    {:handler auth/data-query
-                                     :on-error auth/on-error})}}]
+           ["/{flow-ref}/{key}"
+            {:get {:tags ["Data"]
+                   :summary "Data set"
+                   :parameters {:path :spartadata.sdmx.spec/data-path-params-2
+                                :query :spartadata.sdmx.spec/data-query-params}
+                   :handler sdmx/data}}]
 
-         ["/upload/{agency-id}/{resource-id}/{version}"
-          {:post {:tags ["Data and Metadata Queries"]
-                  :summary "SDMX data post"
-                  :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
-                               :query :spartadata.sdmx.spec/data-upload-query-params
-                               :multipart {:file multipart/temp-file-part}}
-                  :handler (restrict (partial sdmx/data-upload connection-pool)
-                                     {:handler (partial auth/should-be-owner connection-pool)
-                                      :on-error auth/on-error})}}]
+           ["/{flow-ref}/{key}/{provider-ref}"
+            {:get {:tags ["Data"]
+                   :summary "Data set"
+                   :parameters {:path :spartadata.sdmx.spec/data-path-params-3
+                                :query :spartadata.sdmx.spec/data-query-params}
+                   :handler sdmx/data}}]]
 
-         ["/upload/historical/{agency-id}/{resource-id}/{version}"
-          {:post {:tags ["Data and Metadata Queries"]
-                  :summary "SDMX historical data post"
-                  :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
-                               :query :spartadata.sdmx.spec/data-upload-hist-query-params
-                               :multipart {:file multipart/temp-file-part}}
-                  :handler (restrict (partial sdmx/data-upload-hist connection-pool)
-                                     {:handler (partial auth/should-be-admin connection-pool)
-                                      :on-error auth/on-error })}}]
+        ["" {:middleware [auth/authorisation]}
 
-         ["/rollback/{agency-id}/{resource-id}/{version}"
-          {:post {:tags ["Data and Metadata Queries"]
-                  :summary "SDMX data rollback post"
-                  :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
-                  :handler (restrict (partial sdmx/data-rollback connection-pool)
-                                     {:handler (partial auth/should-be-owner connection-pool)
-                                      :on-error auth/on-error })}}]
+         ["/modify/data" 
 
-         ["/releases/{agency-id}/{resource-id}/{version}"
-          {:get {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX data release query"
+          ["/{strict-flow-ref}"
+           {:post {:tags ["Data"]
+                   :summary "Data set"
+                   :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
+                                :query :spartadata.sdmx.spec/data-upload-query-params
+                                :multipart {:file multipart/temp-file-part}}
+                   :handler sdmx/data-upload}
+            :delete {:tags ["Data"]
+                     :summary "Data set"
+                     :parameters {:path :spartadata.sdmx.spec/data-delete-path-params}
+                     :handler sdmx/data-delete}}]
+
+          ["/historical/{strict-flow-ref}"
+           {:post {:tags ["Data"]
+                   :summary "Historical data set"
+                   :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
+                                :query :spartadata.sdmx.spec/data-upload-hist-query-params
+                                :multipart {:file multipart/temp-file-part}}
+                   :handler sdmx/data-upload-hist}}]
+
+          ["/rollback/{strict-flow-ref}"
+           {:post {:tags ["Data"]
+                   :summary "Rollback data set"
+                   :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
+                   :handler sdmx/data-rollback}}]]
+
+         ["/release/data/{strict-flow-ref}" 
+          {:get {:tags ["Data"]
+                 :summary "Data set releases"
                  :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
                               :query :spartadata.sdmx.spec/data-releases-query-params}
-                 :handler (restrict (partial sdmx/data-releases connection-pool)
-                                    {:handler auth/should-be-authenticated
-                                     :on-error auth/on-error})}}]
-
-        ["/release/{agency-id}/{resource-id}/{version}"
-         {:post {:tags ["Data and Metadata Queries"]
-                 :summary "SDMX data release dataset"
-                 :parameters {:path :spartadata.sdmx.spec/data-release-path-params
-                              :query :spartadata.sdmx.spec/data-release-query-params}
-                 :handler (restrict (partial sdmx/data-release connection-pool)
-                                    {:handler (partial auth/should-be-owner connection-pool)
-                                     :on-error auth/on-error})}}]
-
-        ["/delete/{agency-id}/{resource-id}/{version}"
-         {:delete {:tags ["Data and Metadata Queries"]
-                   :summary "SDMX data delete dataset"
-                   :parameters {:path :spartadata.sdmx.spec/data-delete-path-params}
-                   :handler (restrict (partial sdmx/data-delete connection-pool)
-                                      {:handler (partial auth/should-be-admin connection-pool)
-                                       :on-error auth/on-error})}}]]
+                 :handler sdmx/data-releases}
+           :post {:tags ["Data"]
+                  :summary "Data set release"
+                  :parameters {:path :spartadata.sdmx.spec/data-release-path-params
+                               :query :spartadata.sdmx.spec/data-release-query-params}
+                  :handler sdmx/data-release}}]]]
 
         ["/metadata/{flow-ref}/{key}/{provider-ref}"
-         {:get {:tags ["Data and Metadata Queries"]
-                :summary "SDMX metadata query"
+         {:get {:tags ["Metadata"]
+                :summary "Metadata set"
                 :parameters {:path :spartadata.sdmx.spec/data-path-params-3
                              :query :spartadata.sdmx.spec/data-query-params}
-                :handler sdmx/metadata}}]
-
-        ["/datastructure/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:tags ["Structural Metadata Queries"]
-                :summary "SDMX Data Structure Definition query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/metadatastructure/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:tags ["Structural Metadata Queries"]
-                :summary "SDMX Metadata Structure Definition query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/categoryscheme/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-3}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Category Scheme query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-3
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/conceptscheme/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-1}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Concept Scheme query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-1
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/codelist/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-3}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Codelist query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-3
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/hierarchicalcodelist/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-2}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Hierarchical Codelist query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-2
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/organisationscheme/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-3}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Organisation Scheme query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-3
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/agencyscheme/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-1}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Agency Scheme query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-1
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/dataproviderscheme/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-3}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Data Provider Scheme query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-3
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/dataconsumerscheme/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-3}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Data Consumer Scheme query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-3
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/organisationunitscheme/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-3}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Organisation Unit Scheme query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-3
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/dataflow/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Data Flow query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/metadataflow/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Metadata Flow Definition query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/reportingtaxonomy/{nested-agency-id}/{nested-resource-id}/{nested-version}/{item-id-3}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Reporting Taxonomy query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params-3
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/provisionagreement/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Provision Agreement query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/structureset/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Structure Set query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/process/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Process query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/categorisation/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Categorisation query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/contentconstraint/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Content Constraint query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/actualconstraint/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Actual Constraint query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/allowedconstraint/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Allowed Constraint query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/attachmentconstraint/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Attachment Constraint query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/structure/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Structural Metadata Queries"]}
-                :summary "SDMX Structure query"
-                :parameters {:path :spartadata.sdmx.spec/struct-path-params
-                             :query :spartadata.sdmx.spec/struct-query-params}
-                :handler sdmx/structure}}]
-
-        ["/schema/{context}/{nested-agency-id}/{nested-resource-id}/{nested-version}"
-         {:get {:swagger {:tags ["Schema Queries"]}
-                :summary "SDMX Data Structure Definition query"
-                :parameters {:path :spartadata.sdmx.spec/schema-path-params
-                             :query :spartadata.sdmx.spec/schema-query-params}
-                :handler sdmx/schema}}]
-
-        ["/availableconstraint/{flow-ref}/{key}/{provider-ref}/{component-id}"
-         {:get {:swagger {:tags ["Other Queries"]}
-                :summary "SDMX metadata query"
-                :parameters {:path :spartadata.sdmx.spec/other-path-params
-                             :query :spartadata.sdmx.spec/other-query-params}
-                :handler sdmx/other}}]]]
+                :handler sdmx/metadata}}]]]
 
       (cond-> {:exception pretty/exception
                :data {:coercion reitit.coercion.spec/coercion
@@ -317,16 +124,21 @@
                                    muuntaja/format-request-middleware
                                    coercion/coerce-response-middleware
                                    coercion/coerce-request-middleware
-                                   multipart/multipart-middleware]}}
+                                   multipart/multipart-middleware
+                                   [conn connection-pool]]}}
         context (assoc :path context)))
+
     (ring/routes
+
       (swagger-ui/create-swagger-ui-handler
         {:path (str context "/sdmxapi")
-         :url (str context "/swagger.json")
+         :url (str context "/sdmxapi/swagger.json")
          :config {:validatorUrl nil
                   :operationsSorter "alpha"}})
+
       (ring/create-resource-handler
         {:path (or context "/")})
+
       (ring/create-default-handler
         {:not-found (constantly {:status 404, :body (xml/emit-str (sdmx-error 100 "No results found."))})
          :method-not-allowed (constantly {:status 405, :body (xml/emit-str (sdmx-error 1004 "Method not allowed."))})

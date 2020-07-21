@@ -14,13 +14,13 @@
 ;; Data API
 
 
-(defn data [connection-pool {headers :headers {path-params :path query-params :query} :parameters}]
+(defn data [{headers :headers {path-params :path query-params :query} :parameters :as request}]
   (let [flow-ref-params (mapv #(clojure.string/split % #"\+") (clojure.string/split (:flow-ref path-params) #","))
         key-params (if (and (:key path-params) (not= "all" (:key path-params))) 
                      (mapv #(clojure.string/split % #"\+") (clojure.string/split (:key path-params) #"\." -1)) "all")
         provider-ref-params (if (:provider-ref path-params) 
                               (mapv #(clojure.string/split % #"\+") (clojure.string/split (:provider-ref path-params) #",")))
-        data-message (try (retrieve-data-message {:datasource connection-pool}
+        data-message (try (retrieve-data-message {:datasource (:conn request)}
                                                  {:flow-ref (condp = (count flow-ref-params)
                                                               1 (-> (zipmap [:id] flow-ref-params) (assoc :agencyid "all") (assoc :version "latest"))
                                                               2 (-> (zipmap [:agencyid :id] flow-ref-params) (assoc :version "latest"))
@@ -39,8 +39,8 @@
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 
-(defn data-upload [connection-pool {headers :headers {path-params :path query-params :query multipart :multipart} :parameters}]
-  (let [data-message (try (upload-data-message {:datasource connection-pool} 
+(defn data-upload [{headers :headers {path-params :path query-params :query multipart :multipart} :parameters :as request}]
+  (let [data-message (try (upload-data-message {:datasource (:conn request)} 
                                                (get-in multipart [:file :tempfile])
                                                (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref path-params) #","))
                                                (update query-params :format (fn [fmt] (case fmt
@@ -50,8 +50,8 @@
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 
-(defn data-upload-hist [connection-pool {headers :headers {path-params :path query-params :query multipart :multipart} :parameters}]
-  (let [data-message (try (upload-historical-data-message {:datasource connection-pool} 
+(defn data-upload-hist [{headers :headers {path-params :path query-params :query multipart :multipart} :parameters :as request}]
+  (let [data-message (try (upload-historical-data-message {:datasource (:conn request)} 
                                                           (get-in multipart [:file :tempfile])
                                                           (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref path-params) #","))
                                                           (update query-params :format (fn [fmt] (case fmt
@@ -61,29 +61,29 @@
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 
-(defn data-rollback [connection-pool request]
+(defn data-rollback [request]
   {:status 201
-   :body (try (rollback-release {:datasource connection-pool} 
+   :body (try (rollback-release {:datasource (:conn request)} 
                                 (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))) 
               (catch Exception e (do (.printStackTrace e) (throw e))))})
 
-(defn data-releases [connection-pool request]
-  (let [data-message (try (fetch-release {:datasource connection-pool} 
+(defn data-releases [request]
+  (let [data-message (try (fetch-release {:datasource (:conn request)} 
                                          (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))
                                          (get-in request [:parameters :query])) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 
-(defn data-release [connection-pool request]
-  (let [data-message (try (add-release {:datasource connection-pool} 
+(defn data-release [request]
+  (let [data-message (try (add-release {:datasource (:conn request)} 
                                        (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))
                                        (-> (get-in request [:parameters :query])
                                            (clojure.set/rename-keys {:releaseDescription :description}))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 
-(defn data-delete [connection-pool request]
-  (let [data-message (try (delete-dataset {:datasource connection-pool} 
+(defn data-delete [request]
+  (let [data-message (try (delete-dataset {:datasource (:conn request)} 
                                           (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
@@ -95,24 +95,3 @@
   {:status 301
    :headers {"location" (str (:sdmx-registry env) (:uri request))}
    :body {}})
-
-(defn structure [{uri :uri context :context query-string :query-string}]
-  {:status 301
-   :headers {"location" (str (:sdmx-registry env) 
-                             (clojure.string/replace-first uri (re-pattern (str context "/sdmxapi")) "/sdmxapi/rest") 
-                             (if query-string (str "?" query-string)))}
-   :body "Redirecting..."})
-
-(defn schema [{uri :uri context :context query-string :query-string}]
-  {:status 301
-   :headers {"location" (str (:sdmx-registry env) 
-                             (clojure.string/replace-first uri (re-pattern (str context "/sdmxapi")) "/sdmxapi/rest") 
-                             (if query-string (str "?" query-string)))}
-   :body "Redirecting..."})
-
-(defn other [{uri :uri context :context query-string :query-string}]
-  {:status 301
-   :headers {"location" (str (:sdmx-registry env) 
-                             (clojure.string/replace-first uri (re-pattern (str context "/sdmxapi")) "/sdmxapi/rest") 
-                             (if query-string (str "?" query-string)))}
-   :body "Redirecting..."})

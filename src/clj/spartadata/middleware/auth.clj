@@ -1,5 +1,5 @@
 (ns spartadata.middleware.auth
-  (:require [buddy.auth.accessrules :refer [success error]]
+  (:require [buddy.auth.accessrules :refer [success error wrap-access-rules]]
             [buddy.auth.backends.httpbasic :refer [http-basic-backend]]
             [buddy.auth.middleware :refer [wrap-authentication]]
             [clojure.data.xml :as xml]
@@ -58,6 +58,7 @@
 ;; Access rules handlers
 
 
+
 (defn on-error [_ value]
   {:status 401
    :headers {"content-type" "application/xml"}
@@ -65,38 +66,65 @@
 
 (defn should-be-authenticated [request]
   (if (:identity request)
-    true
-    (error "Only authenticated users allowed")))
+    (success "Authorisation confirmed.") 
+    (error "Must be authenticated to perform this action.")))
 
 (defn data-query [request]
   (if (:identity request)
     (if (seq (:sdmx-data-query request))
       (success "Provision agreement(s) available") 
-      (error "Must have a valid provision agreement."))
-    (error "Must be logged in to perform this action.")))
+      (error "Must have a valid provision agreement to perform this action."))
+    (error "Must be authenticated to perform this action.")))
 
-(defn should-be-owner [connection-pool request]
+(defn should-be-owner [request]
   (if-let [user (:identity request)]
-    (let [dataset (get-dataset {:datasource connection-pool} 
-                               (sets/rename-keys (get-in request [:parameters :path])
-                                                 {:agency-id :agencyid :resource-id :id}))
-          roles (get-dataset-roles {:datasource connection-pool}
+    (let [dataset (get-dataset {:datasource (:conn request)} 
+                               (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #",")))
+          roles (get-dataset-roles {:datasource (:conn request)}
                                    (merge user dataset))]
       (if (seq (sets/intersection #{"owner" "admin"} 
                                   (into #{} (map :role roles))))
         (success "Authorisation confirmed.") 
         (error "Must be dataset owner or administrator to perform this action.")))
-    (error "Must be logged in to perform this action.")))
+    (error "Must be authenticated to perform this action.")))
 
-(defn should-be-admin [connection-pool request]
+(defn should-be-admin [request]
   (if-let [user (:identity request)]
-    (let [dataset (get-dataset {:datasource connection-pool} 
-                               (sets/rename-keys (get-in request [:parameters :path])
-                                                 {:agency-id :agencyid :resource-id :id}))
-          roles (get-dataset-roles {:datasource connection-pool}
+    (let [dataset (get-dataset {:datasource (:conn request)} 
+                               (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #",")))
+          roles (get-dataset-roles {:datasource (:conn request)}
                                    (merge user dataset))]
-      (if (seq (sets/intersection #{"owner" "admin"} 
+      (if (seq (sets/intersection #{"admin"} 
                                   (into #{} (map :role roles))))
         (success "Authorisation confirmed.") 
         (error "Must be dataset administrator to perform this action.")))
-    (error "Must be logged in to perform this action.")))
+    (error "Must be authenticated to perform this action.")))
+
+
+;; Reitit middleware
+
+(def options {:rules [{:pattern #"^/sdmxapi/data/.*"
+                       :handler data-query}
+                      {:pattern #"^/sdmxapi/modify/data/[^/]*"
+                       :handler should-be-owner 
+                       :request-method :post}
+                      {:pattern #"^/sdmxapi/modify/data/[^/]*"
+                       :handler should-be-admin
+                       :request-method #{:delete :put}}
+                      {:pattern #"^/sdmxapi/modify/data/historical/.*"
+                       :handler should-be-admin}
+                      {:pattern #"^/sdmxapi/modify/data/rollback/.*"
+                       :handler should-be-owner}
+                      {:pattern #"^/sdmxapi/release/data/.*"
+                       :handler should-be-authenticated
+                       :request-method :get}
+                      {:pattern #"^/sdmxapi/release/data/.*"
+                       :handler should-be-owner   
+                       :request-method :post}]
+              :on-error on-error})
+
+(def authorisation
+  (middleware/map->Middleware
+    {:name ::authorisation
+     :description "Authorisation middleware."
+     :wrap #(wrap-access-rules % options)}))

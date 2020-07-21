@@ -118,18 +118,20 @@
 
 ;; Reitit middleware
 
-(defn wrap-resolve-data-query [handler connection-pool]
+(defn wrap-resolve-data-query [handler]
   (fn [request]
-    (when-let [user (:identity request)]
+    (if-let [user (:identity request)]
       (let [dataflows (filter-dataflows (get-in request [:parameters :path :flow-ref])
-                                        (get-datasets {:datasource connection-pool}))
+                                        (get-datasets {:datasource (:conn request)}))
             providers (filter-data-providers (get-in request [:parameters :path :provider-ref])
-                                             (get-providers {:datasource connection-pool} user))
+                                             (get-providers {:datasource (:conn request)} user))
             agreements (filter-provision-agreements dataflows
                                                     providers)]
         (-> request
             (assoc :sdmx-data-query agreements)
-            handler)))))
+            handler))
+      (-> request
+          handler))))
 
 (def resolve-data-query
   (middleware/map->Middleware
