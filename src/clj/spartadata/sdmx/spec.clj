@@ -57,9 +57,9 @@
 
 (s/def ::releaseDateTime (s/and string? #(re-matches #"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}" %)))
 
-(s/def ::data-upload-query-params (s/keys :opt-un [::releaseDescription ::validate]))
+(s/def ::data-upload-query-params (s/keys :opt-un [::releaseDescription]))
 
-(s/def ::data-upload-hist-query-params (s/keys :req-un [::releaseDateTime ::releaseDescription ] :opt-un [::validate]))
+(s/def ::data-upload-hist-query-params (s/keys :req-un [::releaseDateTime ::releaseDescription ]))
 
 (s/def ::data-rollback-path-params (s/keys :req-un [::strict-flow-ref]))
 

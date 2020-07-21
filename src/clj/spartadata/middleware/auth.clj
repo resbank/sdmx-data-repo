@@ -61,20 +61,20 @@
 
 (defn on-error [_ value]
   {:status 401
-   :headers {"content-type" "application/xml"}
+   :headers {"Content-Type" "application/xml"}
    :body (xml/emit-str (sdmx-error 110 (str "Not authorised. " value)))})
 
 (defn should-be-authenticated [request]
   (if (:identity request)
     (success "Authorisation confirmed.") 
-    (error "Must be authenticated to perform this action.")))
+    (error "Must authenticate successfully to perform this action.")))
 
-(defn data-query [request]
+(defn should-have-provision-agreement [request]
   (if (:identity request)
     (if (seq (:sdmx-data-query request))
-      (success "Provision agreement(s) available") 
+      (success "Authorisation confirmed.") 
       (error "Must have a valid provision agreement to perform this action."))
-    (error "Must be authenticated to perform this action.")))
+    (error "Must authenticate successfully to perform this action.")))
 
 (defn should-be-owner [request]
   (if-let [user (:identity request)]
@@ -82,31 +82,25 @@
                                (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #",")))
           roles (get-dataset-roles {:datasource (:conn request)}
                                    (merge user dataset))]
-      (if (seq (sets/intersection #{"owner" "admin"} 
-                                  (into #{} (map :role roles))))
+      (if (contains? (into #{} (map :role roles)) "owner")
         (success "Authorisation confirmed.") 
-        (error "Must be dataset owner or administrator to perform this action.")))
-    (error "Must be authenticated to perform this action.")))
+        (error "Must be data set owner or administrator to perform this action.")))
+    (error "Must authenticate successfully to perform this action.")))
 
 (defn should-be-admin [request]
   (if-let [user (:identity request)]
-    (let [dataset (get-dataset {:datasource (:conn request)} 
-                               (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #",")))
-          roles (get-dataset-roles {:datasource (:conn request)}
-                                   (merge user dataset))]
-      (if (seq (sets/intersection #{"admin"} 
-                                  (into #{} (map :role roles))))
+    (if (:is_admin user)
         (success "Authorisation confirmed.") 
-        (error "Must be dataset administrator to perform this action.")))
-    (error "Must be authenticated to perform this action.")))
+        (error "Must be administrator to perform this action."))
+    (error "Must authenticate successfully to perform this action.")))
 
 
 ;; Reitit middleware
 
 (def options {:rules [{:pattern #"^/sdmxapi/data/.*"
-                       :handler data-query}
+                       :handler should-have-provision-agreement}
                       {:pattern #"^/sdmxapi/modify/data/[^/]*"
-                       :handler should-be-owner 
+                       :handler {:or [should-be-owner should-be-admin]} 
                        :request-method :post}
                       {:pattern #"^/sdmxapi/modify/data/[^/]*"
                        :handler should-be-admin
@@ -114,12 +108,12 @@
                       {:pattern #"^/sdmxapi/modify/data/historical/.*"
                        :handler should-be-admin}
                       {:pattern #"^/sdmxapi/modify/data/rollback/.*"
-                       :handler should-be-owner}
+                       :handler {:or [should-be-owner should-be-admin]}}
                       {:pattern #"^/sdmxapi/release/data/.*"
                        :handler should-be-authenticated
                        :request-method :get}
                       {:pattern #"^/sdmxapi/release/data/.*"
-                       :handler should-be-owner   
+                       :handler {:or [should-be-owner should-be-admin]}   
                        :request-method :post}]
               :on-error on-error})
 

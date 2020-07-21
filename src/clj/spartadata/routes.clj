@@ -27,7 +27,7 @@
 (defn router [connection-pool context]
   (ring/ring-handler
     (ring/router
-      [["/sdmxapi" 
+      [["/sdmxapi" {:swagger {:id ::sdmxapi}}
 
         ["/swagger.json"
          {:get {:no-doc true
@@ -44,22 +44,22 @@
                                  auth/authorisation]}
 
            ["/{flow-ref}"
-            {:get {:tags ["Data"]
-                   :summary "Data set"
+            {:get {:tags ["Retrieve"]
+                   :summary "Get data set"
                    :parameters {:path :spartadata.sdmx.spec/data-path-params-1
                                 :query :spartadata.sdmx.spec/data-query-params}
                    :handler sdmx/data}}]
 
            ["/{flow-ref}/{key}"
-            {:get {:tags ["Data"]
-                   :summary "Data set"
+            {:get {:tags ["Retrieve"]
+                   :summary "Get data set (specify series key)"
                    :parameters {:path :spartadata.sdmx.spec/data-path-params-2
                                 :query :spartadata.sdmx.spec/data-query-params}
                    :handler sdmx/data}}]
 
            ["/{flow-ref}/{key}/{provider-ref}"
-            {:get {:tags ["Data"]
-                   :summary "Data set"
+            {:get {:tags ["Retrieve"]
+                   :summary "Get data set (specify provider)"
                    :parameters {:path :spartadata.sdmx.spec/data-path-params-3
                                 :query :spartadata.sdmx.spec/data-query-params}
                    :handler sdmx/data}}]]
@@ -69,49 +69,107 @@
          ["/modify/data" 
 
           ["/{strict-flow-ref}"
-           {:post {:tags ["Data"]
-                   :summary "Data set"
+           {:put {:tags ["Modify"]
+                  :summary "Create data set"
+                  :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
+                               :query :spartadata.sdmx.spec/data-upload-query-params
+                               :multipart {:file multipart/temp-file-part}}
+                  :handler sdmx/data-upload}
+            :post {:tags ["Modify"]
+                   :summary "Update data set"
                    :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
                                 :query :spartadata.sdmx.spec/data-upload-query-params
                                 :multipart {:file multipart/temp-file-part}}
                    :handler sdmx/data-upload}
-            :delete {:tags ["Data"]
-                     :summary "Data set"
+            :delete {:tags ["Modify"]
+                     :summary "Delete data set"
                      :parameters {:path :spartadata.sdmx.spec/data-delete-path-params}
                      :handler sdmx/data-delete}}]
 
-          ["/historical/{strict-flow-ref}"
-           {:post {:tags ["Data"]
-                   :summary "Historical data set"
+          ["/{strict-flow-ref}/historical"
+           {:post {:tags ["Modify"]
+                   :summary "Update data set (historical update)"
                    :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
                                 :query :spartadata.sdmx.spec/data-upload-hist-query-params
                                 :multipart {:file multipart/temp-file-part}}
                    :handler sdmx/data-upload-hist}}]
 
-          ["/rollback/{strict-flow-ref}"
-           {:post {:tags ["Data"]
-                   :summary "Rollback data set"
+          ["/{strict-flow-ref}/rollback"
+           {:post {:tags ["Modify"]
+                   :summary "Update data set (rollback release)"
                    :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
                    :handler sdmx/data-rollback}}]]
 
          ["/release/data/{strict-flow-ref}" 
-          {:get {:tags ["Data"]
-                 :summary "Data set releases"
+          {:get {:tags ["Release"]
+                 :summary "Get data set releases"
                  :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
                               :query :spartadata.sdmx.spec/data-releases-query-params}
                  :handler sdmx/data-releases}
-           :post {:tags ["Data"]
-                  :summary "Data set release"
+           :post {:tags ["Release"]
+                  :summary "Update data set releases (add release)"
                   :parameters {:path :spartadata.sdmx.spec/data-release-path-params
                                :query :spartadata.sdmx.spec/data-release-query-params}
-                  :handler sdmx/data-release}}]]]
+                  :handler sdmx/data-release}}]]]]
+       
+       ["/userapi" {:swagger {:id ::userapi}}
 
-        ["/metadata/{flow-ref}/{key}/{provider-ref}"
-         {:get {:tags ["Metadata"]
-                :summary "Metadata set"
-                :parameters {:path :spartadata.sdmx.spec/data-path-params-3
-                             :query :spartadata.sdmx.spec/data-query-params}
-                :handler sdmx/metadata}}]]]
+        ["/swagger.json"
+         {:get {:no-doc true
+                :swagger {:info {:title "Sparta Data User Rest API"}
+                          :securityDefinitions {:basicAuth {:type "basic"
+                                                            :name "Authorization"
+                                                            :in "header"}}}
+                :handler (swagger/create-swagger-handler)}}]
+
+        ["/user" {:swagger {:security [{:basicAuth []}]}
+                  :middleware [[auth/authentication (auth/backend connection-pool)]]}
+
+          ["/{user}" 
+           {:put {:tags ["User"]
+                  :summary "Create user"
+                  :handler (constantly {:status 200
+                                        :body {}})}
+            :get {:tags ["User"]
+                  :summary "Get user"
+                  :handler (constantly {:status 200
+                                        :body {}})}
+            :post {:tags ["User"]
+                   :summary "Update user"
+                   :handler (constantly {:status 200
+                                         :body {}})}
+            :delete {:tags ["User"]
+                     :summary "Delete user"
+                     :handler (constantly {:status 200
+                                           :body {}})}}]
+            
+           ["/{user}/provider"
+            {:put {:tags ["Provider"]
+                   :summary "Add data provider"
+                   :handler (constantly {:status 200
+                                         :body {}})}
+             :get {:tags ["Provider"]
+                   :summary "Get data provider"
+                   :handler (constantly {:status 200
+                                         :body {}})}
+             :delete {:tags ["Provider"]
+                      :summary "Delete data provider"
+                      :handler (constantly {:status 200
+                                            :body {}})}}]
+           
+           ["/{user}/role"
+            {:put {:tags ["Role"]
+                   :summary "Add data set role"
+                   :handler (constantly {:status 200
+                                         :body {}})} 
+             :get {:tags ["Role"]
+                   :summary "Get data set role"
+                   :handler (constantly {:status 200
+                                         :body {}})}
+             :delete {:tags ["Role"]
+                      :summary "Delete data set role"
+                      :handler (constantly {:status 200
+                                            :body {}})}}]]]]
 
       (cond-> {:exception pretty/exception
                :data {:coercion reitit.coercion.spec/coercion
@@ -131,7 +189,7 @@
     (ring/routes
 
       (swagger-ui/create-swagger-ui-handler
-        {:path (str context "/sdmxapi")
+        {:path (str context "/api-docs")
          :url (str context "/sdmxapi/swagger.json")
          :config {:validatorUrl nil
                   :operationsSorter "alpha"}})
@@ -140,6 +198,12 @@
         {:path (or context "/")})
 
       (ring/create-default-handler
-        {:not-found (constantly {:status 404, :body (xml/emit-str (sdmx-error 100 "No results found."))})
-         :method-not-allowed (constantly {:status 405, :body (xml/emit-str (sdmx-error 1004 "Method not allowed."))})
-         :not-acceptable (constantly {:status 406, :body (xml/emit-str (sdmx-error 1006 "Not Acceptable."))})}))))
+        {:not-found (constantly {:status 404 
+                                 :headers {"Content-Type" "application/xml"} 
+                                 :body (xml/emit-str (sdmx-error 100 "No results found."))})
+         :method-not-allowed (constantly {:status 405 
+                                          :headers {"Content-Type" "application/xml"} 
+                                          :body (xml/emit-str (sdmx-error 1004 "Method not allowed."))})
+         :not-acceptable (constantly {:status 406 
+                                      :headers {"Content-Type" "application/xml"} 
+                                      :body (xml/emit-str (sdmx-error 1006 "Not Acceptable."))})}))))

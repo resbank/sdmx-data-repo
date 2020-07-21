@@ -42,18 +42,18 @@
                             (xml/element ::commn/Text {} text))))
 
 (defn sdmx-response [data-message]
-  (-> (cond 
-          (= 100 (:error data-message)) {:status 404}
-          (= 110 (:error data-message)) {:status 401}
-          (= 130 (:error data-message)) {:status 413}
-          (= 140 (:error data-message)) {:status 400}
-          (= 150 (:error data-message)) {:status 403}
-          (= 500 (:error data-message)) {:status 500}
-          (= 501 (:error data-message)) {:status 501}
-          (= 503 (:error data-message)) {:status 503}
-          (= 510 (:error data-message)) {:status 413}
-          (= 1000 (:error data-message)) {:status 500}
-          (< 1000 (:error data-message)) {:status 500}
-          :else {:status 200})
-        (assoc :headers {"content-type" (:content-type data-message)})
-        (assoc :body (:content data-message))))
+  (cond-> (cond 
+            (= 100 (:error data-message)) {:status 404}
+            (= 110 (:error data-message)) {:status 401}
+            (= 130 (:error data-message)) {:status 413}
+            (= 140 (:error data-message)) {:status 400}
+            (= 150 (:error data-message)) {:status 403}
+            (= 500 (:error data-message)) {:status 500}
+            (= 501 (:error data-message)) {:status 501}
+            (= 503 (:error data-message)) {:status 503}
+            (= 510 (:error data-message)) {:status 413}
+            (= 1000 (:error data-message)) {:status 500}
+            (< 1000 (:error data-message)) {:status 500}
+            :else {:status 200})
+    (:content-type data-message) (assoc :headers {"Content-Type" (:content-type data-message)})
+    :always (assoc :body (:content data-message))))

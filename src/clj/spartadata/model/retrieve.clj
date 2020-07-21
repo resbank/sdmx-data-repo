@@ -59,7 +59,7 @@
                         [agencyid id version]))))))
 
 (defn retrieve-data-message
-  [db {dataflow :flow-ref dimensions :key unused :provider-ref} {validate? :validate :or {validate? false} :as options}]
+  [db {dataflow :flow-ref dimensions :key _ :provider-ref} {validate? :validate :or {validate? false} :as options}]
   (let [datasets (get-datasets db)
         dataflows (resolve-dataflows dataflow datasets) 
         data-message (compile-data-message db dataflows dimensions options)]
@@ -76,7 +76,7 @@
 (defmulti format-response (fn [data-message options] (if (= "Error" (name (or (:tag data-message) :nil))) "Error" (:format options))))
 
 (defmethod format-response "Error"
-  [data-message options]
+  [data-message _]
   {:error (-> data-message 
               zip/xml-zip 
               (zip-xml/xml1-> ::messg/ErrorMessage)
@@ -86,13 +86,12 @@
    :content (xml/emit-str data-message)})
 
 (defmethod format-response "application/json"
-  [data-message options]
+  [data-message _]
   {:error 0
-   :content-type "application/json"
-   :content (json/write-value-as-string data-message)})
+   :content data-message})
 
 (defmethod format-response "application/vnd.sdmx.compact+xml;version=2.0"
-  [data-message options]
+  [data-message _]
   {:error 0
    :content-type "application/vnd.sdmx.compact+xml;version=2.0"
    :content (xml/emit-str data-message)})
