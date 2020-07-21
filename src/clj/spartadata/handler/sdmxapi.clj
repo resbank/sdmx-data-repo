@@ -42,7 +42,7 @@
 (defn data-upload [connection-pool {headers :headers {path-params :path query-params :query multipart :multipart} :parameters}]
   (let [data-message (try (upload-data-message {:datasource connection-pool} 
                                                (get-in multipart [:file :tempfile])
-                                               path-params
+                                               (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref path-params) #","))
                                                (update query-params :format (fn [fmt] (case fmt
                                                                                         "json" "application/json"
                                                                                         "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
@@ -53,7 +53,7 @@
 (defn data-upload-hist [connection-pool {headers :headers {path-params :path query-params :query multipart :multipart} :parameters}]
   (let [data-message (try (upload-historical-data-message {:datasource connection-pool} 
                                                           (get-in multipart [:file :tempfile])
-                                                          path-params
+                                                          (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref path-params) #","))
                                                           (update query-params :format (fn [fmt] (case fmt
                                                                                                    "json" "application/json"
                                                                                                    "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
@@ -64,20 +64,19 @@
 (defn data-rollback [connection-pool request]
   {:status 201
    :body (try (rollback-release {:datasource connection-pool} 
-                                (get-in request [:parameters :path])) 
+                                (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))) 
               (catch Exception e (do (.printStackTrace e) (throw e))))})
 
 (defn data-releases [connection-pool request]
   (let [data-message (try (fetch-release {:datasource connection-pool} 
-                                         (get-in request [:parameters :path])
+                                         (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))
                                          (get-in request [:parameters :query])) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 
 (defn data-release [connection-pool request]
   (let [data-message (try (add-release {:datasource connection-pool} 
-                                       (-> (get-in request [:parameters :path])
-                                           (clojure.set/rename-keys {:agency-id :agencyid :resource-id :id}))
+                                       (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))
                                        (-> (get-in request [:parameters :query])
                                            (clojure.set/rename-keys {:releaseDescription :description}))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
@@ -85,8 +84,7 @@
 
 (defn data-delete [connection-pool request]
   (let [data-message (try (delete-dataset {:datasource connection-pool} 
-                                          (-> (get-in request [:parameters :path])
-                                              (clojure.set/rename-keys {:agency-id :agencyid :resource-id :id}))) 
+                                          (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 

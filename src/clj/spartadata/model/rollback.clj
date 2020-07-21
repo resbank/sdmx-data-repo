@@ -18,7 +18,7 @@
 
 (defn rollback-release [db dataflow]
   "Rolls back the latest realease"
-  (let [dataset (get-dataset db (clojure.set/rename-keys dataflow {:agency-id :agencyid :resource-id :id}))
+  (let [dataset (get-dataset db dataflow)
         releases (get-releases db dataset)]
     (if (< 1 (count releases))
       (do (doseq [series (get-series db dataset)]

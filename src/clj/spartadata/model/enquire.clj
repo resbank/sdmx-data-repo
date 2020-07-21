@@ -17,8 +17,8 @@
 
 
 (defn fetch-release [db dataflow {newest :newest oldest :oldest after :after before :before includes :includes description :description}]
-  (let [{agencyid :agency-id id :resource-id version :version} dataflow
-        dataset (get-dataset db {:agencyid agencyid :id id :version version})]
+  (let [{:keys [agencyid id version]} dataflow
+        dataset (get-dataset db dataflow)]
     (if dataset
       (let [releases (cond->> (get-releases db dataset)
                        before (filter #(java-time/before? (java-time/local-date-time (:release %)) (java-time/local-date-time before)))

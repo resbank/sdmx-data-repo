@@ -39,7 +39,7 @@
 
   If release? evaluates to 'true' the upload is considered to be the final version of the data preceding the next release. 
   A description of the data release may be provided"
-  (let [{agencyid :agency-id id :resource-id version :version} dataflow]
+  (let [{:keys [agencyid id version]} dataflow]
     (if-let [result (if validate? (validate-data [agencyid id version] 
                                                  data-message 
                                                  (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0")))]
@@ -105,11 +105,10 @@
 (defn upload-dataset [db dataflow components dataset-zipper]
   (println (contains? (:attributes components) "RELEASE"))
   (let [has_release_attr? (contains? (:attributes components) "RELEASE")
-        components (update components :attributes #(clojure.set/difference % #{"RELEASE"}))
-        dataset (clojure.set/rename-keys dataflow {:agency-id :agencyid :resource-id :id})]
+        components (update components :attributes #(clojure.set/difference % #{"RELEASE"}))]
     (jdbc/with-db-transaction [tx db]
-      (let [dataset-id (or (get-dataset tx dataset)
-                           (insert-dataset tx (assoc dataset :has_release_attr has_release_attr?)))]
+      (let [dataset-id (or (get-dataset tx dataflow)
+                           (insert-dataset tx (assoc dataflow :has_release_attr has_release_attr?)))]
         (doseq [attribute (:attrs (zip/node dataset-zipper))
                 :when (contains? (:attributes components) (name (key attribute)))]
           (upsert-dataset-attribute tx (merge {:attr (name (key attribute))
@@ -187,7 +186,7 @@
   Historical data is data that contains previously released data that has yet to be uploaded. It requires that the next release be specified, 
   with the further requirement that it must follow chronologically from the previous release - but must be before the current time. A description 
   of the release may also be specified. This function is used for initialising the database, don't use it unless you are sure of how it works."
-  (let [{agencyid :agency-id id :resource-id version :version} dataflow]
+  (let [{:keys [agencyid id version]} dataflow]
     (if-let [result (if validate? (validate-data [agencyid id version] 
                                                  data-message 
                                                  (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0")))]

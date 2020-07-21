@@ -133,7 +133,9 @@
                             (xml/element ::messg/Receiver {:id "ANONYMOUS"}))
                dataset-messages))
 
-
+(defmethod format-data-message :default
+  [dataset-messages options]
+  (sdmx-error 1002 "Format not supported. Unable to complete request."))
 
 ;; Collect datasets
 
