@@ -33,9 +33,12 @@
                                                          (if (->> (map (partial reduce str) key-params) (reduce str) empty?) "all" key-params)
                                                          key-params)}
                                                  (update query-params :format (fn [fmt] (case fmt
-                                                                                          "json" "application/json"
-                                                                                          "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
-                                                                                          (get headers "accept")))))
+                                                                                          "json" :application/json
+                                                                                          "sdmx-2.0" :application/vnd.sdmx.compact+xml_version-2.0
+                                                                                          (-> (get headers "accept")
+                                                                                              (clojure.string/replace #";" "_")
+                                                                                              (clojure.string/replace #"=" "-")
+                                                                                              keyword)))))
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
     (sdmx-response data-message)))
 

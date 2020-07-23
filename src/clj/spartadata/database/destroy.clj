@@ -8,6 +8,7 @@
 ;; Define table creation functions for sdmx database
 
 
+(sql/def-db-fns "sql/types.sql")
 (sql/def-db-fns "sql/tables.sql")
 ;(sql/def-db-fns "sql/functions.sql")
 ;(sql/def-db-fns "sql/triggers.sql")

@@ -29,6 +29,13 @@
 
 
 
+;; SDMX type hierarchy
+
+
+(derive :application/vnd.sdmx.compact+xml_version-2.0 :application/xml)
+
+
+
 ;; Retrieve data message
 
 
@@ -73,9 +80,9 @@
           (format-response (sdmx-error 1001 "Validation not supported. Multiple dataflows/structures") options))
         (format-response data-message options)))))
 
-(defmulti format-response (fn [data-message options] (if (= "Error" (name (or (:tag data-message) :nil))) "Error" (:format options))))
+(defmulti format-response (fn [data-message options] (if (= "Error" (name (or (:tag data-message) :nil))) :error (:format options))))
 
-(defmethod format-response "Error"
+(defmethod format-response :error
   [data-message _]
   {:error (-> data-message 
               zip/xml-zip 
@@ -85,18 +92,22 @@
    :content-type "application/xml"
    :content (xml/emit-str data-message)})
 
-(defmethod format-response "application/json"
+(defmethod format-response :application/json
   [data-message _]
   {:error 0
    :content data-message})
 
-(defmethod format-response "application/vnd.sdmx.compact+xml;version=2.0"
+(defmethod format-response :application/xml
+  [data-message _]
+  {:error 0
+   :content-type "application/xml"
+   :content (xml/emit-str data-message)})
+
+(defmethod format-response :application/vnd.sdmx.compact+xml_version-2.0
   [data-message _]
   {:error 0
    :content-type "application/vnd.sdmx.compact+xml;version=2.0"
    :content (xml/emit-str data-message)})
-
-
 
 ;; Compile data message
 
@@ -112,7 +123,7 @@
 
 (defmulti format-data-message (fn [dataset-messages options] (:format options)))
 
-(defmethod format-data-message "application/json"
+(defmethod format-data-message :application/json
   [dataset-messages options]
   {:Header {:ID (str "IREF" (swap! message-counter inc))
             :Test false
@@ -121,7 +132,7 @@
             :Receiver {:id "ANONYMOUS"}}
    :DataSets dataset-messages})
 
-(defmethod format-data-message "application/vnd.sdmx.compact+xml;version=2.0"
+(defmethod format-data-message :application/xml
   [dataset-messages options]
   (xml/element ::messg/CompactData {}
                (xml/element ::messg/Header {}
@@ -160,7 +171,7 @@
 
 (defmulti format-dataset (fn [db dataset dimensions options] (:format options)))
 
-(defmethod format-dataset "application/json"
+(defmethod format-dataset :application/json
   [db {attrs :attrs values :vals :as dataset} dimensions options]
   (merge (if (:has_release_attr dataset)
            (if (contains? options :releaseDescription) 
@@ -172,7 +183,7 @@
            {})
          {:Series (retrieve-series db dataset dimensions options)}))
 
-(defmethod format-dataset "application/vnd.sdmx.compact+xml;version=2.0"
+(defmethod format-dataset :application/xml
   [db {attrs :attrs values :vals :as dataset} dimensions {[agencyid id version] :dataflow :as options}]
   (let [ns1 (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")]
     (apply xml/element 
@@ -218,13 +229,13 @@
 
 (defmulti format-series (fn [db series options] (:format options)))
 
-(defmethod format-series "application/json"
+(defmethod format-series :application/json
   [db {series-id :series_id dims :dims dim-values :dim_vals attrs :attrs attr-values :attr_vals} options] 
   (merge (if (first (.getArray attrs)) (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray attr-values))) {})
          (zipmap (mapv keyword (.getArray dims)) (into [] (.getArray dim-values)))
          {:Obs (retrieve-observations db series-id options)}))
 
-(defmethod format-series "application/vnd.sdmx.compact+xml;version=2.0"
+(defmethod format-series :application/xml
   [db {series-id :series_id dims :dims dim-values :dim_vals attrs :attrs attr-values :attr_vals} {ns1 :ns1 :as options}] 
   (apply xml/element 
          (concat [(xml/qname ns1 "Series") 
@@ -245,13 +256,13 @@
 
 (defmulti format-observation (fn [obs options] (:format options)))
 
-(defmethod format-observation "application/json" 
+(defmethod format-observation :application/json 
   [{time-period :time_period obs-value :obs_value attrs :attrs values :vals} _] 
   (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
       (assoc :TIME_PERIOD time-period) 
       (assoc :OBS_VALUE obs-value)))
 
-(defmethod format-observation "application/vnd.sdmx.compact+xml;version=2.0" 
+(defmethod format-observation :application/xml
   [{time-period :time_period obs-value :obs_value attrs :attrs values :vals} {ns1 :ns1}] 
   (xml/element (xml/qname ns1 "Obs") 
                (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
