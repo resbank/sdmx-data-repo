@@ -22,6 +22,9 @@
   (let [db {:connection-uri (:sdmx-postgres env)}]
     (jdbc/with-db-transaction [tx db]
       ;(create-intarray-extension tx)
+      (create-role-type tx)
+      (create-action-type tx)
+      (create-usr-action-type tx)
       (create-dataset-table tx)
       (create-dataset-attr-table tx)
       (create-release-table tx)

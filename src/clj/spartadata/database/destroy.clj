@@ -1,7 +1,6 @@
 (ns spartadata.database.destroy
   (:require [clojure.java.jdbc :as jdbc]
             [environ.core :refer [env]]
-            [hikari-cp.core :refer [make-datasource close-datasource]]
             [hugsql.core :as sql]))
 
 
@@ -37,7 +36,10 @@
       (drop-dimension-table tx)
       (drop-release-table tx)
       (drop-dataset-attr-table tx)
-      (drop-dataset-table tx))))
+      (drop-dataset-table tx)
+      (drop-role-type tx)
+      (drop-action-type tx)
+      (drop-usr-action-type tx))))
 
 
 

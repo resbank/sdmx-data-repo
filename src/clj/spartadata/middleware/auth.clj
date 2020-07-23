@@ -110,31 +110,33 @@
 
 ;; Reitit middleware
 
-(def options {:rules [{:pattern #"^/sdmxapi/data/.*"
-                       :handler should-have-provision-agreement}
-                      {:pattern #"^/sdmxapi/modify/data/.*"
-                       :handler {:or [should-be-admin should-be-owner]} 
-                       :request-method :post}
-                      {:pattern #"^/sdmxapi/modify/data/.*"
-                       :handler should-be-admin
-                       :request-method #{:delete :put}}
-                      {:pattern #"^/sdmxapi/modify/data/.*/historical$"
-                       :handler should-be-admin}
-                      {:pattern #"^/sdmxapi/modify/data/.*/rollback$"
-                       :handler {:or [should-be-admin should-be-owner]}}
-                      {:pattern #"^/sdmxapi/release/data/.*"
-                       :handler should-be-authenticated
-                       :request-method :get}
-                      {:pattern #"^/sdmxapi/release/data/.*"
-                       :handler {:or [should-be-admin should-be-owner]}   
-                       :request-method :post}
-                     {:pattern #"^/sdmxapi/release/data/.*/historical$"
-                      :handler should-be-admin   
-                      :request-method :post} ]
-              :on-error on-error})
+
+(defn options [context] 
+  {:rules [{:pattern (re-pattern (str #"^" context #"/sdmxapi/data/.*")) 
+            :handler should-have-provision-agreement}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*"))
+            :handler {:or [should-be-admin should-be-owner]} 
+            :request-method :post}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*"))
+            :handler should-be-admin
+            :request-method #{:delete :put}}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*/historical$"))
+            :handler should-be-admin}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*/rollback$"))
+            :handler {:or [should-be-admin should-be-owner]}}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/release/data/.*"))
+            :handler should-be-authenticated
+            :request-method :get}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/release/data/.*"))
+            :handler {:or [should-be-admin should-be-owner]}   
+            :request-method :post}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/release/data/.*.historical$")) 
+            :handler should-be-admin   
+            :request-method :post} ]
+   :on-error on-error})
 
 (def authorisation
   (middleware/map->Middleware
     {:name ::authorisation
      :description "Authorisation middleware."
-     :wrap #(wrap-access-rules % options)}))
+     :wrap #(wrap-access-rules %1 (options %2))}))

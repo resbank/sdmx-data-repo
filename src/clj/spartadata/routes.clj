@@ -41,7 +41,7 @@
              :middleware [[auth/authentication (auth/backend connection-pool)]]}
 
           ["/data" {:middleware [resolve-data-query 
-                                 auth/authorisation]}
+                                 [auth/authorisation context]]}
 
            ["/{flow-ref}"
             {:get {:tags ["Retrieve"]
@@ -64,7 +64,7 @@
                                 :query :spartadata.sdmx.spec/data-query-params}
                    :handler sdmx/data}}]]
 
-        ["" {:middleware [auth/authorisation]}
+        ["" {:middleware [[auth/authorisation context]]}
 
          ["/modify/data" 
 
