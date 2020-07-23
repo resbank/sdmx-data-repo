@@ -31,7 +31,7 @@
 
         ["/swagger.json"
          {:get {:no-doc true
-                :swagger {:info {:title "SDMX Rest API"}
+                :swagger {:info {:title "Sparta Data SDMX Rest API"}
                           :securityDefinitions {:basicAuth {:type "basic"
                                                             :name "Authorization"
                                                             :in "header"}}}
@@ -72,9 +72,9 @@
            {:put {:tags ["Modify"]
                   :summary "Create data set"
                   :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
-                               :query :spartadata.sdmx.spec/data-upload-query-params
+                               :query :spartadata.sdmx.spec/data-create-query-params
                                :multipart {:file multipart/temp-file-part}}
-                  :handler sdmx/data-upload}
+                  :handler sdmx/data-create}
             :post {:tags ["Modify"]
                    :summary "Update data set"
                    :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
@@ -100,7 +100,9 @@
                    :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
                    :handler sdmx/data-rollback}}]]
 
-         ["/release/data/{strict-flow-ref}" 
+         ["/release/data" 
+
+          ["/{strict-flow-ref}"
           {:get {:tags ["Release"]
                  :summary "Get data set releases"
                  :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
@@ -110,7 +112,14 @@
                   :summary "Update data set releases (add release)"
                   :parameters {:path :spartadata.sdmx.spec/data-release-path-params
                                :query :spartadata.sdmx.spec/data-release-query-params}
-                  :handler sdmx/data-release}}]]]]
+                  :handler sdmx/data-release}}]
+          
+          ["/{strict-flow-ref}/historical"
+           {:post {:tags ["Release"]
+                  :summary "Update data set releases (add historical release)"
+                  :parameters {:path :spartadata.sdmx.spec/data-release-path-params
+                               :query :spartadata.sdmx.spec/data-release-hist-query-params}
+                  :handler sdmx/data-release-hist}}]]]]]
        
        ["/userapi" {:swagger {:id ::userapi}}
 

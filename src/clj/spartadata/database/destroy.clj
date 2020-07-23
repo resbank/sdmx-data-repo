@@ -24,6 +24,11 @@
       (drop-array-idx tx)
       (drop-obs-idx tx)
       (drop-obs-attr-idx tx)
+      (drop-usr-log-table tx)
+      (drop-dataset-log-table tx)
+      (drop-provider-table tx)
+      (drop-role-table tx)
+      (drop-authentication-table tx)
       (drop-observation-attr-table tx)
       (drop-observation-table tx)
       (drop-series-attr-table tx)
@@ -33,3 +38,6 @@
       (drop-release-table tx)
       (drop-dataset-attr-table tx)
       (drop-dataset-table tx))))
+
+
+

@@ -39,7 +39,8 @@
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
 
   :profiles {:dev [:project/dev :profiles/dev]
-             :project/dev {:dependencies [[integrant/repl "0.3.1"]
+             :project/dev {:dependencies [[clj-http "3.10.1"]
+                                          [integrant/repl "0.3.1"]
                                           [ring/ring-jetty-adapter "1.8.0"]] 
                            :source-paths ["dev"]
                            :resource-paths ["dev/resources"]}

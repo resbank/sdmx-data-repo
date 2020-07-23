@@ -126,9 +126,12 @@
             providers (filter-data-providers (get-in request [:parameters :path :provider-ref])
                                              (get-providers {:datasource (:conn request)} user))
             agreements (filter-provision-agreements dataflows
-                                                    providers)]
+                                                    providers)
+            result {:dataflows dataflows
+                    :providers providers
+                    :agreements agreements}]
         (-> request
-            (assoc :sdmx-data-query agreements)
+            (assoc :sdmx-data-query result)
             handler))
       (-> request
           handler))))

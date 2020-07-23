@@ -60,20 +60,33 @@
 
 
 (defn on-error [_ value]
-  {:status 401
-   :headers {"Content-Type" "application/xml"}
-   :body (xml/emit-str (sdmx-error 110 (str "Not authorised. " value)))})
+  (if (= (str value) "No datasets found corresponding to the queried data flow.")
+    {:status 404
+     :headers {"Content-Type" "application/xml"}
+     :body (xml/emit-str (sdmx-error 100 (str "Not found. " value)))}
+    {:status 401
+     :headers {"Content-Type" "application/xml"}
+     :body (xml/emit-str (sdmx-error 110 (str "Not authorised. " value)))}))
 
 (defn should-be-authenticated [request]
   (if (:identity request)
     (success "Authorisation confirmed.") 
     (error "Must authenticate successfully to perform this action.")))
 
-(defn should-have-provision-agreement [request]
-  (if (:identity request)
-    (if (seq (:sdmx-data-query request))
-      (success "Authorisation confirmed.") 
-      (error "Must have a valid provision agreement to perform this action."))
+(defn should-have-provision-agreement [{user :identity data-query :sdmx-data-query}]
+  (if user
+    (cond 
+      (empty? (:dataflows data-query))
+      (error "No datasets found corresponding to the queried data flow.")
+
+      (empty? (:providers data-query))
+      (error "User not registered with any data providers.")
+
+      (empty? (:agreements data-query)) 
+      (error "Must have a valid provision agreement to perform this action.")
+
+      :else 
+      (success "Authorisation confirmed."))
     (error "Must authenticate successfully to perform this action.")))
 
 (defn should-be-owner [request]
@@ -99,22 +112,25 @@
 
 (def options {:rules [{:pattern #"^/sdmxapi/data/.*"
                        :handler should-have-provision-agreement}
-                      {:pattern #"^/sdmxapi/modify/data/[^/]*"
-                       :handler {:or [should-be-owner should-be-admin]} 
+                      {:pattern #"^/sdmxapi/modify/data/.*"
+                       :handler {:or [should-be-admin should-be-owner]} 
                        :request-method :post}
-                      {:pattern #"^/sdmxapi/modify/data/[^/]*"
+                      {:pattern #"^/sdmxapi/modify/data/.*"
                        :handler should-be-admin
                        :request-method #{:delete :put}}
-                      {:pattern #"^/sdmxapi/modify/data/historical/.*"
+                      {:pattern #"^/sdmxapi/modify/data/.*/historical$"
                        :handler should-be-admin}
-                      {:pattern #"^/sdmxapi/modify/data/rollback/.*"
-                       :handler {:or [should-be-owner should-be-admin]}}
+                      {:pattern #"^/sdmxapi/modify/data/.*/rollback$"
+                       :handler {:or [should-be-admin should-be-owner]}}
                       {:pattern #"^/sdmxapi/release/data/.*"
                        :handler should-be-authenticated
                        :request-method :get}
                       {:pattern #"^/sdmxapi/release/data/.*"
-                       :handler {:or [should-be-owner should-be-admin]}   
-                       :request-method :post}]
+                       :handler {:or [should-be-admin should-be-owner]}   
+                       :request-method :post}
+                     {:pattern #"^/sdmxapi/release/data/.*/historical$"
+                      :handler should-be-admin   
+                      :request-method :post} ]
               :on-error on-error})
 
 (def authorisation

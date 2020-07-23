@@ -59,7 +59,9 @@
 
 (s/def ::data-upload-query-params (s/keys :opt-un [::releaseDescription]))
 
-(s/def ::data-upload-hist-query-params (s/keys :req-un [::releaseDateTime ::releaseDescription ]))
+(s/def ::data-upload-hist-query-params (s/keys :req-un [::releaseDateTime ::releaseDescription]))
+
+(s/def ::data-create-query-params (s/keys :req-un [::releaseDescription] :opt-un [::releaseDateTime]))
 
 (s/def ::data-rollback-path-params (s/keys :req-un [::strict-flow-ref]))
 
@@ -76,6 +78,7 @@
 (s/def ::data-release-path-params (s/keys :req-un [::strict-flow-ref]))
 
 (s/def ::data-release-query-params (s/keys :req-un [::releaseDescription]))
+(s/def ::data-release-hist-query-params (s/keys :req-un [::releaseDateTime ::releaseDescription]))
 
 (s/def ::data-delete-path-params (s/keys :req-un [::strict-flow-ref]))
 

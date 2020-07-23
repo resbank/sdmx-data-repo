@@ -178,7 +178,7 @@
 
 ;;;; Need a way to ensure that upload data is not run in parallel on the same dataset ;;;;
 
-(defn upload-historical-data-message [db data-message dataflow {validate? :validate next-release :release release-description :releaseDescription :or {validate? true} :as options}]
+(defn upload-historical-data-message [db data-message dataflow {validate? :validate next-release :releaseDateTime release-description :releaseDescription :or {validate? true} :as options}]
   "Usage: (upload-data-message db dimensions dataflow & {:keys [validate?] :or {validate? true}})
 
   Validate and upload a data message. Duplicate series in the data message will be ignored.

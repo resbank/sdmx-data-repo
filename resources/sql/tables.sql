@@ -186,6 +186,12 @@ CREATE TABLE IF NOT EXISTS authentication (
   is_admin BOOLEAN DEFAULT FALSE NOT NULL
 );
 
+-- :name drop-authentication-table
+-- :command :execute
+-- :result :raw
+-- :doc Drop authentication table, if it exists.
+DROP TABLE IF EXISTS authentication;
+
 -- :name create-role-table
 -- :command :execute
 -- :result :raw
@@ -197,6 +203,12 @@ CREATE TABLE IF NOT EXISTS role (
   PRIMARY KEY (user_id, dataset_id)
 );
 
+-- :name drop-role-table
+-- :command :execute
+-- :result :raw
+-- :doc Drop data set roles table, if it exists.
+DROP TABLE IF EXISTS role;
+
 -- :name create-provider-table
 -- :command :execute
 -- :result :raw
@@ -207,6 +219,13 @@ CREATE TABLE IF NOT EXISTS provider (
   id VARCHAR(50),
   user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE
 );
+
+-- :name drop-provider-table
+-- :command :execute
+-- :result :raw
+-- :doc Drop data providers table, if it exists.
+DROP TABLE IF EXISTS provider;
+
 
 
 
@@ -227,6 +246,12 @@ CREATE TABLE IF NOT EXISTS dataset_log (
   dataset_id INTEGER REFERENCES dataset(dataset_id)
 );
 
+-- :name drop-dataset-log-table
+-- :command :execute
+-- :result :raw
+-- :doc Drop dataset log table, if it exists.
+DROP TABLE IF EXISTS dataset_log;
+
 -- :name create-usr-log-table
 -- :command :execute
 -- :result :raw
@@ -238,3 +263,9 @@ CREATE TABLE IF NOT EXISTS usr_log (
   admin_user_id INTEGER REFERENCES authentication(user_id),
   target_user_id  INTEGER REFERENCES authentication(user_id)
 );
+
+-- :name drop-usr-log-table
+-- :command :execute
+-- :result :raw
+-- :doc Drop user log table, if it exists.
+DROP TABLE IF EXISTS usr_log;
