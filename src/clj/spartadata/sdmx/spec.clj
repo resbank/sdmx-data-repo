@@ -14,6 +14,7 @@
 (def multiple-version-type (re-pattern (str latest-type "|" all-type "|" nested-version-type)))
 (def key-type #"([\w@\$\-]+(\+[\w@\$\-]+)*)?(\.([\w@\$\-]+(\+[\w@\$\-]+)*)?)*")
 (def provider-ref-type #"([A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*(\+[A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*)*\,)?[\w@\$\-]+(\+[\w@\$\-]+)*")
+(def strict-provider-ref-type (re-pattern (str nc-name-id-type "\\," id-type)))
 (def flow-ref-type #"([\w@\$\-]+(\+[\w@\$\-]+)*|([A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*(\+[A-Za-z][\w\-]*(\.[A-Za-z][\w\-]*)*)*(\,[\w@\$\-]+(\+[\w@\$\-]+)*)(\,(all|latest|\d+(\.\d+)*(\+\d+(\.\d+)*)*))?))")
 (def strict-flow-ref-type (re-pattern (str nc-name-id-type "\\," id-type "\\," version-type)))
 
@@ -122,3 +123,30 @@
 (s/def ::mode string?)
 
 (s/def ::other-query-params (s/keys :opt-un [::startPeriod ::endPeriod ::updatedAfter ::references ::mode]))
+
+
+
+;; Specs for usr API end points
+
+(s/def ::username string?)
+
+(s/def ::strict-provider-ref (s/and string? #(re-matches strict-provider-ref-type  %)))
+
+(s/def ::role (s/and string? #(re-matches #"owner|user"  %)))
+
+(s/def ::username (s/and string? #(re-matches #"^\w+$"  %)))
+(s/def ::firstname (s/and string? #(re-matches #"^\w+$"  %)))
+(s/def ::lastname (s/and string? #(re-matches #"^\w+$"  %)))
+(s/def ::password (s/and string? #(re-matches #"^[\w\-\!@#\$%\^\&\*]{8,50}$"  %)))
+(s/def ::email (s/and string? #(re-matches #"^\w+([_\-\.]\w+)*@[a-zA-Z0-9]+(\.[a-zA-Z]{2,6})+$"  %)))
+(s/def ::is_admin boolean?)
+
+(s/def ::user-path-params (s/keys :req-un [::username]))
+
+(s/def ::provider-path-params (s/keys :req-un [::username ::strict-provider-ref]))
+
+(s/def ::role-path-params (s/keys :req-un [::username ::role]))
+
+(s/def ::user-create-query-params (s/keys :req-un [::firstname ::lastname ::password ::email ::is_admin]))
+(s/def ::user-update-query-params (s/keys :opt-un [::firstname ::lastname ::password ::email ::is_admin]))
+(s/def ::user-self-query-params (s/keys :opt-un [::firstname ::lastname ::password ::email]))

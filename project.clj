@@ -30,13 +30,14 @@
 
   :repl-options {:init-ns user}
 
-  :ring {:handler spartadata.application/handler
+  :ring {:uberwar-name "SpartaData.war"
+         :handler spartadata.application/handler
          :init spartadata.application/start
          :destroy spartadata.application/stop}
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
-  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
+  :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/jul-factory"]
 
   :profiles {:dev [:project/dev :profiles/dev]
              :project/dev {:dependencies [[clj-http "3.10.1"]

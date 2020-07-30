@@ -1,3 +1,6 @@
+
+
+
 --------------------------------------------------------------------------------
 -- DATA QUERIES
 --------------------------------------------------------------------------------
@@ -248,9 +251,12 @@ AND created <= :release::TIMESTAMP
 GROUP BY observation.time_period, observation.obs_value, observation.created
 ORDER BY observation.time_period, observation.created DESC;
 
+
+
 --------------------------------------------------------------------------------
 -- AUTHORISATION QUERIES
 --------------------------------------------------------------------------------
+
 
 -- :name get-user
 -- :command :query
@@ -258,7 +264,14 @@ ORDER BY observation.time_period, observation.created DESC;
 -- :doc Return user information corresponding to the supplied :username.
 SELECT *
 FROM authentication
-WHERE username=:username;
+WHERE username=upper(:username);
+
+-- :name get-users
+-- :command :query
+-- :result :many
+-- :doc Return user information corresponding to the supplied :username.
+SELECT *
+FROM authentication;
 
 -- :name get-dataset-roles
 -- :command :query
@@ -276,3 +289,40 @@ AND dataset_id=:dataset_id;
 SELECT * 
 FROM provider
 WHERE user_id=:user_id;
+
+
+
+--------------------------------------------------------------------------------
+-- LOG QUERIES
+--------------------------------------------------------------------------------
+
+
+-- :name get-data-set-log
+-- :command :query
+-- :result :many
+-- :doc Return data set log.
+SELECT *
+FROM dataset_log;
+
+-- :name get-data-set-log-by-date
+-- :command :query
+-- :result :many
+-- :doc Return data set log starting at :startdate.
+SELECT *
+FROM dataset_log
+WHERE modified > :startdate::TIMESTAMP;
+
+-- :name get-usr-log
+-- :command :query
+-- :result :many
+-- :doc Return user log.
+SELECT *
+FROM usr_log;
+
+-- :name get-usr-log-by-date
+-- :command :query
+-- :result :many
+-- :doc Return user log starting at :startdate.
+SELECT *
+FROM usr_log
+WHERE modified > :startdate::TIMESTAMP;

@@ -1,3 +1,11 @@
+
+
+
+--------------------------------------------------------------------------------
+-- DATA DELETIONS
+--------------------------------------------------------------------------------
+
+
 -- :name delete-dataset-by-dataset-id
 -- :command :execute
 -- :result :affected
@@ -26,3 +34,35 @@ WHERE observation_id=:observation_id;
 DELETE FROM release
 WHERE release=:release::TIMESTAMP
 AND dataset_id=:dataset_id;
+
+
+
+--------------------------------------------------------------------------------
+-- AUTHORISATION DELETIONS
+--------------------------------------------------------------------------------
+
+
+-- :name delete-user
+-- :command :execute
+-- :result :affected
+-- :doc Delete user.
+DELETE FROM authentication
+WHERE username=upper(:username);
+
+-- :name delete-role
+-- :command :execute
+-- :result :affected
+-- :doc Delete data set role.
+DELETE FROM role
+WHERE role=:role
+AND user_id=:user_id
+AND dataset_id=:dataset_id;
+
+-- :name delete-provider
+-- :command :execute
+-- :result :affected
+-- :doc Delete data provider.
+DELETE FROM provider
+WHERE agencyid=:agencyid
+AND id=:id
+AND user_id=:user_id;

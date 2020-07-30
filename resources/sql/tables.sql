@@ -1,3 +1,6 @@
+
+
+
 --------------------------------------------------------------------------------
 -- DATA TABLES
 --------------------------------------------------------------------------------
@@ -198,8 +201,8 @@ DROP TABLE IF EXISTS authentication;
 -- :doc Create data set roles table, if it doesn't already exist.
 CREATE TABLE IF NOT EXISTS role (
   role ROLE_ENUM DEFAULT 'user' NOT NULL,
-  user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE,
-  dataset_id INTEGER REFERENCES dataset(dataset_id) ON DELETE CASCADE,
+  user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE NOT NULL,
+  dataset_id INTEGER REFERENCES dataset(dataset_id) ON DELETE CASCADE NOT NULL,
   PRIMARY KEY (user_id, dataset_id)
 );
 
@@ -215,9 +218,9 @@ DROP TABLE IF EXISTS role;
 -- :doc Create data providers table, if it doesn't already exist.
 CREATE TABLE IF NOT EXISTS provider (
   provider_id SERIAL PRIMARY KEY,
-  agencyid VARCHAR(50),
-  id VARCHAR(50),
-  user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE
+  agencyid VARCHAR(50) NOT NULL,
+  id VARCHAR(50) NOT NULL,
+  user_id INTEGER REFERENCES authentication(user_id) ON DELETE CASCADE NOT NULL
 );
 
 -- :name drop-provider-table
@@ -242,8 +245,8 @@ CREATE TABLE IF NOT EXISTS dataset_log (
   log_id SERIAL PRIMARY KEY,
   action ACTION_ENUM NOT NULL,
   modified TIMESTAMP DEFAULT current_timestamp NOT NULL,
-  user_id INTEGER REFERENCES authentication(user_id),
-  dataset_id INTEGER REFERENCES dataset(dataset_id)
+  user_id INTEGER REFERENCES authentication(user_id) NOT NULL,
+  dataset_id INTEGER REFERENCES dataset(dataset_id) NOT NULL
 );
 
 -- :name drop-dataset-log-table
@@ -260,8 +263,8 @@ CREATE TABLE IF NOT EXISTS usr_log (
   log_id SERIAL PRIMARY KEY,
   action USR_ACTION_ENUM NOT NULL,
   modified TIMESTAMP DEFAULT current_timestamp NOT NULL,
-  admin_user_id INTEGER REFERENCES authentication(user_id),
-  target_user_id  INTEGER REFERENCES authentication(user_id)
+  admin_user_id INTEGER REFERENCES authentication(user_id) NOT NULL,
+  target_user_id  INTEGER REFERENCES authentication(user_id) NOT NULL
 );
 
 -- :name drop-usr-log-table

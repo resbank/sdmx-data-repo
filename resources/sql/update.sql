@@ -1,3 +1,11 @@
+
+
+--------------------------------------------------------------------------------
+-- DATA UPDATES
+--------------------------------------------------------------------------------
+
+
+
 -- :name insert-dataset
 -- :command :query
 -- :result :one
@@ -87,3 +95,61 @@ INSERT INTO observation_attribute (attr, val, observation_id)
 VALUES :t*:attrs
 ON CONFLICT ON CONSTRAINT observation_attribute_attr_val_observation_id_key
 DO UPDATE SET val = excluded.val;
+
+
+
+--------------------------------------------------------------------------------
+-- AUTHORISATION UPDATES
+--------------------------------------------------------------------------------
+
+
+-- :name upsert-user
+-- :command :execute
+-- :result :affected
+-- :doc Insert user, update on conflict :username conflict.
+INSERT INTO authentication (username, password, firstname, lastname, email, is_admin)
+VALUES (upper(:username), :password, :firstname, :lastname, :email, :is_admin)
+ON CONFLICT ON CONSTRAINT authentication_username_key
+DO UPDATE SET 
+  password = :password,
+  firstname = :firstname,
+  lastname = :lastname,
+  email = :email,
+  is_admin = :is_admin;
+
+-- :name insert-role
+-- :command :execute
+-- :result :affected
+-- :doc Insert role.
+INSERT INTO role (role, user_id, dataset_id)
+VALUES (:role, :user_id, :dataset_id);
+
+-- :name insert-provider
+-- :command :execute
+-- :result :affected
+-- :doc Insert data provider.
+INSERT INTO provider (agencyid, id, user_id)
+VALUES (:agencyid, :id, :user_id);
+
+
+
+--------------------------------------------------------------------------------
+-- LOG UPDATES
+--------------------------------------------------------------------------------
+
+
+-- :name insert-data-log-entry
+-- :command :execute
+-- :result :affected
+-- :doc Insert data set log entry.
+INSERT INTO dataset_log (action, user_id, dataset_id)
+VALUES (:action, :user_id, :dataset_id);
+
+-- :name insert-usr-log-entry
+-- :command :execute
+-- :result :affected
+-- :doc Insert user log entry.
+INSERT INTO usr_log (action, admin_user_id, target_user_id)
+VALUES (:action, :admin_user_id, :target_user_id);
+
+

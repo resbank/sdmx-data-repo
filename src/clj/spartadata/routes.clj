@@ -11,7 +11,8 @@
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.parameters :as parameters]
             [reitit.ring.middleware.dev :as dev]
-            [spartadata.handler.sdmxapi :as sdmx]
+            [spartadata.handler.sdmxapi :as sdmxapi]
+            [spartadata.handler.userapi :as userapi]
             [spartadata.middleware.auth :as auth]
             [spartadata.middleware.conn :refer [conn]]
             [spartadata.middleware.data-query-resolution :refer [resolve-data-query]]
@@ -48,21 +49,21 @@
                    :summary "Get data set"
                    :parameters {:path :spartadata.sdmx.spec/data-path-params-1
                                 :query :spartadata.sdmx.spec/data-query-params}
-                   :handler sdmx/data}}]
+                   :handler sdmxapi/data}}]
 
            ["/{flow-ref}/{key}"
             {:get {:tags ["Retrieve"]
                    :summary "Get data set (specify series key)"
                    :parameters {:path :spartadata.sdmx.spec/data-path-params-2
                                 :query :spartadata.sdmx.spec/data-query-params}
-                   :handler sdmx/data}}]
+                   :handler sdmxapi/data}}]
 
            ["/{flow-ref}/{key}/{provider-ref}"
             {:get {:tags ["Retrieve"]
                    :summary "Get data set (specify provider)"
                    :parameters {:path :spartadata.sdmx.spec/data-path-params-3
                                 :query :spartadata.sdmx.spec/data-query-params}
-                   :handler sdmx/data}}]]
+                   :handler sdmxapi/data}}]]
 
         ["" {:middleware [[auth/authorisation context]]}
 
@@ -74,17 +75,17 @@
                   :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
                                :query :spartadata.sdmx.spec/data-create-query-params
                                :multipart {:file multipart/temp-file-part}}
-                  :handler sdmx/data-create}
+                  :handler sdmxapi/data-create}
             :post {:tags ["Modify"]
                    :summary "Update data set"
                    :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
                                 :query :spartadata.sdmx.spec/data-upload-query-params
                                 :multipart {:file multipart/temp-file-part}}
-                   :handler sdmx/data-upload}
+                   :handler sdmxapi/data-upload}
             :delete {:tags ["Modify"]
                      :summary "Delete data set"
                      :parameters {:path :spartadata.sdmx.spec/data-delete-path-params}
-                     :handler sdmx/data-delete}}]
+                     :handler sdmxapi/data-delete}}]
 
           ["/{strict-flow-ref}/historical"
            {:post {:tags ["Modify"]
@@ -92,13 +93,13 @@
                    :parameters {:path :spartadata.sdmx.spec/data-upload-path-params
                                 :query :spartadata.sdmx.spec/data-upload-hist-query-params
                                 :multipart {:file multipart/temp-file-part}}
-                   :handler sdmx/data-upload-hist}}]
+                   :handler sdmxapi/data-upload-hist}}]
 
           ["/{strict-flow-ref}/rollback"
            {:post {:tags ["Modify"]
                    :summary "Update data set (rollback release)"
                    :parameters {:path :spartadata.sdmx.spec/data-rollback-path-params}
-                   :handler sdmx/data-rollback}}]]
+                   :handler sdmxapi/data-rollback}}]]
 
          ["/release/data" 
 
@@ -107,19 +108,19 @@
                  :summary "Get data set releases"
                  :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
                               :query :spartadata.sdmx.spec/data-releases-query-params}
-                 :handler sdmx/data-releases}
+                 :handler sdmxapi/data-releases}
            :post {:tags ["Release"]
                   :summary "Update data set releases (add release)"
                   :parameters {:path :spartadata.sdmx.spec/data-release-path-params
                                :query :spartadata.sdmx.spec/data-release-query-params}
-                  :handler sdmx/data-release}}]
+                  :handler sdmxapi/data-release}}]
           
           ["/{strict-flow-ref}/historical"
            {:post {:tags ["Release"]
                   :summary "Update data set releases (add historical release)"
                   :parameters {:path :spartadata.sdmx.spec/data-release-path-params
                                :query :spartadata.sdmx.spec/data-release-hist-query-params}
-                  :handler sdmx/data-release-hist}}]]]]]
+                  :handler sdmxapi/data-release-hist}}]]]]]
        
        ["/userapi" {:swagger {:id ::userapi}}
 
@@ -131,54 +132,105 @@
                                                             :in "header"}}}
                 :handler (swagger/create-swagger-handler)}}]
 
-        ["/user" {:swagger {:security [{:basicAuth []}]}
-                  :middleware [[auth/authentication (auth/backend connection-pool)]]}
+        ["" {:swagger {:security [{:basicAuth []}]}
+             :middleware [[auth/authentication (auth/backend connection-pool)]
+                          [auth/authorisation context]]}
 
-          ["/{user}" 
+         ["/users"
+          {:get {:tags ["User"]
+                 :summary "Get all users"
+                 :handler userapi/retrieve-all-users}}]
+
+
+         ["/self"
+          {:get {:tags ["User"]
+                 :summary "Get own user"
+                 :handler userapi/retrieve-self}
+           :post {:tags ["User"]
+                  :parameters {:query :spartadata.sdmx.spec/user-self-query-params}
+                  :summary "Update own user"
+                  :handler userapi/update-self}}]
+
+         ["/self/profile"
+          {:get {:tags ["User"]
+                 :summary "Get own user profile"
+                 :handler userapi/retrieve-self-profile}}]
+
+         ["/user" 
+
+          ["/{username}" 
            {:put {:tags ["User"]
                   :summary "Create user"
-                  :handler (constantly {:status 200
-                                        :body {}})}
+                  :parameters {:path :spartadata.sdmx.spec/user-path-params
+                               :query :spartadata.sdmx.spec/user-create-query-params}
+                  :handler userapi/create-user}
             :get {:tags ["User"]
                   :summary "Get user"
-                  :handler (constantly {:status 200
-                                        :body {}})}
+                  :parameters {:path :spartadata.sdmx.spec/user-path-params}
+                  :handler userapi/retrieve-user}
             :post {:tags ["User"]
                    :summary "Update user"
-                   :handler (constantly {:status 200
-                                         :body {}})}
+                   :parameters {:path :spartadata.sdmx.spec/user-path-params
+                               :query :spartadata.sdmx.spec/user-update-query-params}
+                   :handler userapi/update-user}
             :delete {:tags ["User"]
                      :summary "Delete user"
+                     :parameters {:path :spartadata.sdmx.spec/user-path-params}
+                     :handler userapi/remove-user}}]
+
+          ["/{username}/profile" 
+           {:get {:tags ["User"]
+                  :summary "Get user profile"
+                  :parameters {:path :spartadata.sdmx.spec/user-path-params}
+                  :handler userapi/retrieve-profile}}]
+
+          ["/{username}/providers"
+           {:get {:tags ["Provider"]
+                  :summary "Get data providers"
+                  :parameters {:path :spartadata.sdmx.spec/user-path-params}
+                  :handler (constantly {:status 200
+                                        :body {}})}}]
+
+          ["/{username}/provider/{strict-provider-ref}"
+           {:put {:tags ["Provider"]
+                  :summary "Add data provider"
+                  :parameters {:path :spartadata.sdmx.spec/provider-path-params}
+                  :handler (constantly {:status 200
+                                        :body {}})}
+            :get {:tags ["Provider"]
+                  :summary "Get data provider"
+                  :parameters {:path :spartadata.sdmx.spec/provider-path-params}
+                  :handler (constantly {:status 200
+                                        :body {}})}
+            :delete {:tags ["Provider"]
+                     :summary "Delete data provider"
+                     :parameters {:path :spartadata.sdmx.spec/provider-path-params}
                      :handler (constantly {:status 200
                                            :body {}})}}]
-            
-           ["/{user}/provider"
-            {:put {:tags ["Provider"]
-                   :summary "Add data provider"
-                   :handler (constantly {:status 200
-                                         :body {}})}
-             :get {:tags ["Provider"]
-                   :summary "Get data provider"
-                   :handler (constantly {:status 200
-                                         :body {}})}
-             :delete {:tags ["Provider"]
-                      :summary "Delete data provider"
-                      :handler (constantly {:status 200
-                                            :body {}})}}]
-           
-           ["/{user}/role"
-            {:put {:tags ["Role"]
-                   :summary "Add data set role"
-                   :handler (constantly {:status 200
-                                         :body {}})} 
-             :get {:tags ["Role"]
-                   :summary "Get data set role"
-                   :handler (constantly {:status 200
-                                         :body {}})}
-             :delete {:tags ["Role"]
-                      :summary "Delete data set role"
-                      :handler (constantly {:status 200
-                                            :body {}})}}]]]]
+
+          ["/{username}/roles"
+           {:get {:tags ["Role"]
+                  :summary "Get data set roles"
+                  :parameters {:path :spartadata.sdmx.spec/user-path-params}
+                  :handler (constantly {:status 200
+                                        :body {}})}}]
+
+          ["/{username}/role/{role}"
+           {:put {:tags ["Role"]
+                  :summary "Add data set role"
+                  :parameters {:path :spartadata.sdmx.spec/role-path-params}
+                  :handler (constantly {:status 200
+                                        :body {}})} 
+            :get {:tags ["Role"]
+                  :summary "Get data set role"
+                  :parameters {:path :spartadata.sdmx.spec/role-path-params}
+                  :handler (constantly {:status 200
+                                        :body {}})}
+            :delete {:tags ["Role"]
+                     :summary "Delete data set role"
+                     :parameters {:path :spartadata.sdmx.spec/role-path-params}
+                     :handler (constantly {:status 200
+                                           :body {}})}}]]]]]
 
       (cond-> {:exception pretty/exception
                :data {:coercion reitit.coercion.spec/coercion

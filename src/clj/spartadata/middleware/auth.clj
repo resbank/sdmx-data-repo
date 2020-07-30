@@ -114,25 +114,33 @@
 (defn options [context] 
   {:rules [{:pattern (re-pattern (str #"^" context #"/sdmxapi/data/.*")) 
             :handler should-have-provision-agreement}
-           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*"))
-            :handler {:or [should-be-admin should-be-owner]} 
+
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*/historical$"))
+            :handler should-be-admin
             :request-method :post}
            {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*"))
             :handler should-be-admin
             :request-method #{:delete :put}}
-           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*/historical$"))
-            :handler should-be-admin}
-           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*/rollback$"))
-            :handler {:or [should-be-admin should-be-owner]}}
+           {:pattern (re-pattern (str #"^" context #"/sdmxapi/modify/data/.*"))
+            :handler {:or [should-be-admin should-be-owner]} 
+            :request-method :post}
+           
            {:pattern (re-pattern (str #"^" context #"/sdmxapi/release/data/.*"))
             :handler should-be-authenticated
             :request-method :get}
            {:pattern (re-pattern (str #"^" context #"/sdmxapi/release/data/.*"))
             :handler {:or [should-be-admin should-be-owner]}   
             :request-method :post}
-           {:pattern (re-pattern (str #"^" context #"/sdmxapi/release/data/.*.historical$")) 
+           
+           {:pattern (re-pattern (str #"^" context #"/userapi/.*")) 
+            :handler should-be-authenticated   
+            :request-method :get}
+           {:pattern (re-pattern (str #"^" context #"/userapi/self/profile")) 
+            :handler should-be-authenticated   
+            :request-method :post}
+           {:pattern (re-pattern (str #"^" context #"/userapi/.*")) 
             :handler should-be-admin   
-            :request-method :post} ]
+            :request-method #{:delete :post :put}}]
    :on-error on-error})
 
 (def authorisation

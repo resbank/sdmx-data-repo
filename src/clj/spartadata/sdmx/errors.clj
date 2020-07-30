@@ -24,7 +24,7 @@
 ;; 1003 Upload failed
 ;; 1004 Method not allowed
 ;; 1005 Not Acceptable
-
+;; 1006 User modification failed
 
 
 ;; Error message generating function
