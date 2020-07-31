@@ -278,17 +278,41 @@ FROM authentication;
 -- :result :many
 -- :doc Return the data set roles for a given :user_id & :dataset_id.
 SELECT *
+FROM role;
+
+-- :name get-dataset-role
+-- :command :query
+-- :result :one
+-- :doc Return the data set roles for a given :user_id & :dataset_id.
+SELECT *
 FROM role
 WHERE user_id=:user_id
 AND dataset_id=:dataset_id;
 
 -- :name get-providers
--- :command
--- :many
+-- :command :query
+-- :result :many
+-- :doc Return the provider IDs.
+SELECT * 
+FROM provider;
+
+-- :name get-providers-by-user
+-- :command :query
+-- :result :many
 -- :doc Return the provider IDs registered to the given :user_id.
 SELECT * 
 FROM provider
 WHERE user_id=:user_id;
+
+-- :name get-provider
+-- :command :query
+-- :result one
+-- :doc Return the provider ID corresponding to :user_id & :agencyid & :id.
+SELECT * 
+FROM provider
+WHERE user_id=:user_id
+AND agencyid=:agencyid
+AND id=:id;
 
 
 

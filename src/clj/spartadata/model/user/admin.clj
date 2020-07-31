@@ -75,7 +75,7 @@
   (format-users content-type [user]))
 
 (defn retrieve-user [db content-type user]
-  (format-users content-type [(get-user user db)]))
+  (format-users content-type [(get-user db user)]))
 
 ;; User modification functions
 
@@ -137,4 +137,4 @@
   (format-users content-type [user]))
 
 (defn retrieve-profile [db content-type user]
-  (format-users content-type [(get-user user db)]))
+  (format-users content-type [(get-user db user)]))

@@ -141,7 +141,6 @@
                  :summary "Get all users"
                  :handler userapi/retrieve-all-users}}]
 
-
          ["/self"
           {:get {:tags ["User"]
                  :summary "Get own user"
@@ -155,6 +154,17 @@
           {:get {:tags ["User"]
                  :summary "Get own user profile"
                  :handler userapi/retrieve-self-profile}}]
+
+         ["/providers"
+          {:get {:tags ["Provider"]
+                 :summary "Get data providers"
+                 :handler userapi/retrieve-all-providers}}]
+
+         ["/roles"
+          {:get {:tags ["Role"]
+                 :summary "Get data set roles"
+                 :handler (constantly {:status 200
+                                       :body {}})}}]
 
          ["/user" 
 
@@ -186,31 +196,23 @@
 
           ["/{username}/providers"
            {:get {:tags ["Provider"]
-                  :summary "Get data providers"
+                  :summary "Get data user's providers"
                   :parameters {:path :spartadata.sdmx.spec/user-path-params}
-                  :handler (constantly {:status 200
-                                        :body {}})}}]
+                  :handler userapi/retrieve-providers-by-user}}]
 
           ["/{username}/provider/{strict-provider-ref}"
            {:put {:tags ["Provider"]
                   :summary "Add data provider"
                   :parameters {:path :spartadata.sdmx.spec/provider-path-params}
-                  :handler (constantly {:status 200
-                                        :body {}})}
-            :get {:tags ["Provider"]
-                  :summary "Get data provider"
-                  :parameters {:path :spartadata.sdmx.spec/provider-path-params}
-                  :handler (constantly {:status 200
-                                        :body {}})}
+                  :handler userapi/create-provider}
             :delete {:tags ["Provider"]
                      :summary "Delete data provider"
                      :parameters {:path :spartadata.sdmx.spec/provider-path-params}
-                     :handler (constantly {:status 200
-                                           :body {}})}}]
+                     :handler userapi/remove-provider}}]
 
           ["/{username}/roles"
            {:get {:tags ["Role"]
-                  :summary "Get data set roles"
+                  :summary "Get user's data set roles"
                   :parameters {:path :spartadata.sdmx.spec/user-path-params}
                   :handler (constantly {:status 200
                                         :body {}})}}]
@@ -221,11 +223,6 @@
                   :parameters {:path :spartadata.sdmx.spec/role-path-params}
                   :handler (constantly {:status 200
                                         :body {}})} 
-            :get {:tags ["Role"]
-                  :summary "Get data set role"
-                  :parameters {:path :spartadata.sdmx.spec/role-path-params}
-                  :handler (constantly {:status 200
-                                        :body {}})}
             :delete {:tags ["Role"]
                      :summary "Delete data set role"
                      :parameters {:path :spartadata.sdmx.spec/role-path-params}
