@@ -10,14 +10,14 @@
             [reitit.ring.middleware.exception :as exception]
             [reitit.ring.middleware.multipart :as multipart]
             [reitit.ring.middleware.parameters :as parameters]
-            [reitit.ring.middleware.dev :as dev]
+;            [reitit.ring.middleware.dev :as dev]
             [spartadata.handler.sdmxapi :as sdmxapi]
             [spartadata.handler.userapi :as userapi]
             [spartadata.middleware.auth :as auth]
             [spartadata.middleware.conn :refer [conn]]
             [spartadata.middleware.data-query-resolution :refer [resolve-data-query]]
             [spartadata.sdmx.errors :refer [sdmx-error]]
-            [spartadata.sdmx.spec :refer :all]
+            [spartadata.sdmx.spec]
             [muuntaja.core :as m]))
 
 

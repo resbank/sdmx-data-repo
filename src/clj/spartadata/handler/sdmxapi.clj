@@ -7,7 +7,7 @@
             [spartadata.model.upload :refer [upload-data-message upload-historical-data-message]]
             [spartadata.model.rollback :refer [rollback-release]]
             [spartadata.model.enquire :refer [fetch-release]]
-            [spartadata.sdmx.errors :refer [sdmx-response]]))
+            [spartadata.utilities :refer [format-response]]))
 
 
 
@@ -40,7 +40,7 @@
                                                                                               (clojure.string/replace #"=" "-")
                                                                                               keyword)))))
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
 
 (defn data-upload [{headers :headers {path-params :path query-params :query multipart :multipart} :parameters :as request}]
   (let [data-message (try (upload-data-message {:datasource (:conn request)} 
@@ -51,7 +51,7 @@
                                                                                         "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
                                                                                         (get headers "accept"))))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
 
 (defn data-upload-hist [{headers :headers {path-params :path query-params :query multipart :multipart} :parameters :as request}]
   (let [data-message (try (upload-historical-data-message {:datasource (:conn request)} 
@@ -62,7 +62,7 @@
                                                                                                    "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
                                                                                                    (get headers "accept"))))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
 
 (defn data-create [{headers :headers {path-params :path query-params :query multipart :multipart} :parameters :as request}]
   (let [data-message (try (if (:releaseDateTime query-params)
@@ -81,7 +81,7 @@
                                                                                         "sdmx-2.0" "application/vnd.sdmx.compact+xml;version=2.0"
                                                                                         (get headers "accept")))))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
 
 (defn data-rollback [request]
   {:status 201
@@ -94,24 +94,24 @@
                                          (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))
                                          (get-in request [:parameters :query])) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
 
 (defn data-release [request]
   (let [data-message (try (add-release {:datasource (:conn request)} 
                                        (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))
                                        (get-in request [:parameters :query])) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
 
 (defn data-release-hist [request]
   (let [data-message (try (add-release {:datasource (:conn request)} 
                                        (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))
                                        (get-in request [:parameters :query])) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
 
 (defn data-delete [request]
   (let [data-message (try (delete-dataset {:datasource (:conn request)} 
                                           (zipmap [:agencyid :id :version] (clojure.string/split (:strict-flow-ref (get-in request [:parameters :path])) #","))) 
                           (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (sdmx-response data-message)))
+    (format-response data-message)))
