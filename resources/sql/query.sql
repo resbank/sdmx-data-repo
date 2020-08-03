@@ -292,13 +292,6 @@ AND dataset_id=:dataset_id;
 -- :name get-providers
 -- :command :query
 -- :result :many
--- :doc Return the provider IDs.
-SELECT * 
-FROM provider;
-
--- :name get-providers-by-user
--- :command :query
--- :result :many
 -- :doc Return the provider IDs registered to the given :user_id.
 SELECT * 
 FROM provider
@@ -313,6 +306,29 @@ FROM provider
 WHERE user_id=:user_id
 AND agencyid=:agencyid
 AND id=:id;
+
+-- :name get-roles
+-- :command :query
+-- :result :many
+-- :doc Return the provider IDs registered to the given :user_id.
+SELECT 
+  role.role,
+  dataset.agencyid,
+  dataset.id,
+  dataset.version
+FROM role
+INNER JOIN dataset ON role.dataset_id=dataset.dataset_id
+WHERE role.user_id=:user_id;
+
+-- :name get-role
+-- :command :query
+-- :result :one
+-- :doc Return role corresponding to :role & :user_id & :dataset_id.
+SELECT * 
+FROM role
+WHERE role=:role::ROLE_ENUM
+AND user_id=:user_id
+AND dataset_id=:dataset_id;
 
 
 

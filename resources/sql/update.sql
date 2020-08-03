@@ -122,7 +122,7 @@ DO UPDATE SET
 -- :result :affected
 -- :doc Insert role.
 INSERT INTO role (role, user_id, dataset_id)
-VALUES (:role, :user_id, :dataset_id);
+VALUES (:role::ROLE_ENUM, :user_id, :dataset_id);
 
 -- :name insert-provider
 -- :command :execute

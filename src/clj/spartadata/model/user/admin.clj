@@ -17,6 +17,9 @@
 (declare get-users)
 (declare get-user)
 (declare upsert-user)
+(declare get-providers)
+(declare get-roles)
+
 
 
 ;; SDMX type hierarchy
@@ -133,8 +136,70 @@
 
 ;; User profiles
 
-(defn retrieve-self-profile [content-type user]
-  (format-users content-type [user]))
+
+(defmulti format-profile 
+  (fn [content-type _ _ _]
+    (-> content-type
+        (clojure.string/replace #";" "_")
+        (clojure.string/replace #"=" "-")
+        keyword)))
+
+(defmethod format-profile :application/json
+  [_ user providers roles]
+  (if user
+    {:error 0
+     :content {:user (-> user
+                         (dissoc :user_id)
+                         (dissoc :password))
+               :providers (map #(-> %
+                                    (dissoc :user_id)
+                                    (dissoc :provider_id)) 
+                               providers)
+               :roles (map (fn [role]
+                             {:role (:role role)
+                              :dataset (dissoc role :role)}) 
+                           roles)}}
+    {:error 100
+     :content {:error {:code 100
+                       :errormessage "Not found. No user returned."}}}))
+
+(defmethod format-profile :application/xml
+  [_ user providers roles]
+  (if user
+    {:error 0
+     :content-type "application/xml"
+     :content (-> (xml/element :UserProfile {}
+                               (xml/element :User {}
+                                            (xml/element :Username {} (:username user))
+                                            (xml/element :Firstname {} (:firstname user))
+                                            (xml/element :Lastname {} (:lastname user))
+                                            (xml/element :Email {} (:email user))
+                                            (xml/element :Administrator {} (:is_admin user)))
+                               (map (fn [provider]
+                                      (xml/element :Provider {}
+                                                   (xml/element :AgencyID {} (:agencyid provider))
+                                                   (xml/element :ID {} (:id provider))))
+                                    providers)
+                               (map (fn [role]
+                                      (xml/element :role {:ROLE (:role role)}
+                                                   (xml/element :DataSet
+                                                                (xml/element :AgencyID {} (:agencyid role))
+                                                                (xml/element :ID {} (:id role))
+                                                                (xml/element :Version {} (:version role)))))
+                                    roles))
+                  xml/emit-str)}
+    {:error 100
+     :content-type "application/xml"
+     :content (xml/emit-str (sdmx-error 100 "Not found. No user returned."))}))
+
+
+(defn retrieve-self-profile [db content-type user]
+  (let [providers (get-providers db user)
+        roles (get-roles db user)]
+    (format-profile content-type user providers roles)))
 
 (defn retrieve-profile [db content-type user]
-  (format-users content-type [(get-user db user)]))
+  (let [user (get-user db user)
+        providers (get-providers db user)
+        roles (get-roles db user)]
+    (format-profile content-type user providers roles)))

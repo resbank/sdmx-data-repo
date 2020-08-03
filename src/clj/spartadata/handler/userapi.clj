@@ -4,7 +4,7 @@
             [spartadata.model.user.admin :as admin]
 ;            [spartadata.model.user.log :as data-log]
             [spartadata.model.user.provider :as provider]
-;            [spartadata.model.user.role :as role]
+            [spartadata.model.user.role :as role]
             [spartadata.utilities :refer [format-error format-response]]))
 
 
@@ -124,24 +124,13 @@
 ;; Providers
 
 
-(defn retrieve-all-providers 
-  [{connection :conn {content-type "accept"} :headers}]
-  (-> (try (provider/retrieve-all-providers {:datasource connection} 
-                                            content-type) 
-           (catch Exception error 
-             (log/error error {:error "Error in provider/retrieve-all-providers."
-                               :user nil
-                               :provider nil})
-             (format-error content-type 500  "Failed to complete action; get all providers.")))
-      format-response))
-
-(defn retrieve-providers-by-user
+(defn retrieve-providers
   [{connection :conn {content-type "accept"} :headers {user :path} :parameters}]
-  (-> (try (provider/retrieve-providers-by-user {:datasource connection} 
+  (-> (try (provider/retrieve-providers {:datasource connection} 
                                                 content-type
                                                 user) 
            (catch Exception error 
-             (log/error error {:error "Error in provider/retrieve-providers-by-user."
+             (log/error error {:error "Error in provider/retrieve-providers."
                                :user user
                                :provider nil})
              (format-error content-type 500  "Failed to complete action; get providers by user.")))
@@ -178,6 +167,51 @@
 
 
 ;; Roles
+
+
+(defn retrieve-roles
+  [{connection :conn {content-type "accept"} :headers {user :path} :parameters}]
+  (-> (try (role/retrieve-roles {:datasource connection} 
+                                content-type
+                                user) 
+           (catch Exception error 
+             (log/error error {:error "Error in role/retrieve-role."
+                               :user user
+                               :role nil})
+             (format-error content-type 500  "Failed to complete action; get roles.")))
+      format-response))
+
+(defn create-role 
+  [{connection :conn {content-type "accept"} :headers {path-params :path} :parameters}]
+  (-> (try (role/create-role {:datasource connection} 
+                                     content-type
+                                     (select-keys path-params [:username])
+                                     (select-keys path-params [:role])
+                                     (->> (string/split (:strict-flow-ref path-params) #",")
+                                          (zipmap [:agencyid :id :version]))) 
+           (catch Exception error 
+             (log/error error {:error "Error in role/create-role"
+                               :user (:username path-params)
+                               :role (:role path-params)
+                               :dataflow (:strict-flow-ref path-params)})
+             (format-error content-type 500  "Failed to complete action; create role.")))
+      format-response))
+
+(defn remove-role 
+  [{connection :conn {content-type "accept"} :headers {path-params :path} :parameters}]
+  (-> (try (role/remove-role {:datasource connection} 
+                                     content-type
+                                     (select-keys path-params [:username])
+                                     (select-keys path-params [:role])
+                                     (->> (string/split (:strict-flow-ref path-params) #",")
+                                          (zipmap [:agencyid :id :version]))) 
+           (catch Exception error 
+             (log/error error {:error "Error in role/remove-role."
+                               :user (:username path-params)
+                               :role (:role path-params)
+                               :dataflow (:strict-flow-ref path-params)})
+             (format-error content-type 500  "Failed to complete action; remove role.")))
+      format-response))
 
 
 

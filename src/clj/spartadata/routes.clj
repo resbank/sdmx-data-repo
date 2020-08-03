@@ -155,17 +155,6 @@
                  :summary "Get own user profile"
                  :handler userapi/retrieve-self-profile}}]
 
-         ["/providers"
-          {:get {:tags ["Provider"]
-                 :summary "Get data providers"
-                 :handler userapi/retrieve-all-providers}}]
-
-         ["/roles"
-          {:get {:tags ["Role"]
-                 :summary "Get data set roles"
-                 :handler (constantly {:status 200
-                                       :body {}})}}]
-
          ["/user" 
 
           ["/{username}" 
@@ -198,7 +187,7 @@
            {:get {:tags ["Provider"]
                   :summary "Get data user's providers"
                   :parameters {:path :spartadata.sdmx.spec/user-path-params}
-                  :handler userapi/retrieve-providers-by-user}}]
+                  :handler userapi/retrieve-providers}}]
 
           ["/{username}/provider/{strict-provider-ref}"
            {:put {:tags ["Provider"]
@@ -214,20 +203,17 @@
            {:get {:tags ["Role"]
                   :summary "Get user's data set roles"
                   :parameters {:path :spartadata.sdmx.spec/user-path-params}
-                  :handler (constantly {:status 200
-                                        :body {}})}}]
+                  :handler userapi/retrieve-roles}}]
 
-          ["/{username}/role/{role}"
+          ["/{username}/role/{role}/dataflow/{strict-flow-ref}"
            {:put {:tags ["Role"]
                   :summary "Add data set role"
                   :parameters {:path :spartadata.sdmx.spec/role-path-params}
-                  :handler (constantly {:status 200
-                                        :body {}})} 
+                  :handler userapi/create-role} 
             :delete {:tags ["Role"]
                      :summary "Delete data set role"
                      :parameters {:path :spartadata.sdmx.spec/role-path-params}
-                     :handler (constantly {:status 200
-                                           :body {}})}}]]]]]
+                     :handler userapi/remove-role}}]]]]]
 
       (cond-> {:exception pretty/exception
                :data {:coercion reitit.coercion.spec/coercion

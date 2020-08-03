@@ -35,11 +35,12 @@
   (if username
     (if (first providers)
       {:error 0
-       :content {:providers {:username username
-                             :provider (map #(-> %
-                                                 (dissoc :provider_id) 
-                                                 (dissoc :user_id)) 
-                                            providers)}}}
+       :content {:username username
+                 :providers (map (fn [provider]
+                                   ( -> provider
+                                        (dissoc :provider_id) 
+                                        (dissoc :user_id))) 
+                                 providers)}}
       {:error 100
        :content {:error {:code 100
                          :errormessage "Not found. No providers returned."}}})
@@ -67,17 +68,11 @@
      :content-type "application/xml"
      :content (xml/emit-str (sdmx-error 100 "Not found. User not found."))}))
 
-(defn retrieve-all-providers [db content-type]
-  (format-providers content-type 
-                    {:username "ALL"}
-                    (get-providers db)))
-
-
-(defn retrieve-providers-by-user [db content-type user]
+(defn retrieve-providers [db content-type user]
   (if-let [user (get-user db user)]
     (format-providers content-type 
                       user
-                      (get-providers-by-user db user))
+                      (get-providers db user))
     (format-providers content-type 
                       nil
                       [nil])))

@@ -54,7 +54,7 @@ WHERE username=upper(:username);
 -- :result :affected
 -- :doc Delete data set role.
 DELETE FROM role
-WHERE role=:role
+WHERE role=:role::ROLE_ENUM
 AND user_id=:user_id
 AND dataset_id=:dataset_id;
 

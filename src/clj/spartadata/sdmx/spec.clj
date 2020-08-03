@@ -145,7 +145,7 @@
 
 (s/def ::provider-path-params (s/keys :req-un [::username ::strict-provider-ref]))
 
-(s/def ::role-path-params (s/keys :req-un [::username ::role]))
+(s/def ::role-path-params (s/keys :req-un [::username ::role ::strict-flow-ref]))
 
 (s/def ::user-create-query-params (s/keys :req-un [::firstname ::lastname ::password ::email ::is_admin]))
 (s/def ::user-update-query-params (s/keys :opt-un [::firstname ::lastname ::password ::email ::is_admin]))
