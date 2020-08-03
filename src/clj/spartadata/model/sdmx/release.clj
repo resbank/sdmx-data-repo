@@ -1,4 +1,4 @@
-(ns spartadata.model.release
+(ns spartadata.model.sdmx.release
   (:require [clojure.data.xml :as xml] 
             [hugsql.core :as sql]
             [java-time]

@@ -1,4 +1,4 @@
-(ns spartadata.model.rollback
+(ns spartadata.model.sdmx.rollback
   (:require [clojure.java.jdbc :as jdbc]
             [hugsql.core :as sql]
             [java-time]))

@@ -1,4 +1,4 @@
-(ns spartadata.model.retrieve
+(ns spartadata.model.sdmx.retrieve
   (:require [clojure.data.xml :as xml]
             [clojure.data.zip.xml :as zip-xml]
             [clojure.zip :as zip]

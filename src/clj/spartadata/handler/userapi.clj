@@ -47,8 +47,9 @@
       format-response))
 
 (defn retrieve-self-profile 
-  [{{content-type "accept"} :headers user :identity}]
-  (-> (try (admin/retrieve-self-profile content-type
+  [{connection :conn {content-type "accept"} :headers user :identity}]
+  (-> (try (admin/retrieve-self-profile {:datasource connection}
+                                        content-type
                                         user) 
            (catch Exception error 
              (log/error error {:error "Error in admin/retrieve-self-profile."

@@ -1,12 +1,10 @@
 (ns spartadata.handler.sdmxapi
-  (:require [clojure.data.xml :as xml]
-            [environ.core :refer [env]]
-            [spartadata.model.delete :refer [delete-dataset]]
-            [spartadata.model.release :refer [add-release]]
-            [spartadata.model.retrieve :refer [retrieve-data-message]]
-            [spartadata.model.upload :refer [upload-data-message upload-historical-data-message]]
-            [spartadata.model.rollback :refer [rollback-release]]
-            [spartadata.model.enquire :refer [fetch-release]]
+  (:require [spartadata.model.sdmx.delete :refer [delete-dataset]]
+            [spartadata.model.sdmx.release :refer [add-release]]
+            [spartadata.model.sdmx.retrieve :refer [retrieve-data-message]]
+            [spartadata.model.sdmx.upload :refer [upload-data-message upload-historical-data-message]]
+            [spartadata.model.sdmx.rollback :refer [rollback-release]]
+            [spartadata.model.sdmx.enquire :refer [fetch-release]]
             [spartadata.utilities :refer [format-response]]))
 
 

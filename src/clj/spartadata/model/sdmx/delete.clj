@@ -1,4 +1,4 @@
-(ns spartadata.model.delete
+(ns spartadata.model.sdmx.delete
   (:require [clojure.java.jdbc :as jdbc]
             [hugsql.core :as sql]))
 

@@ -1,4 +1,4 @@
-(ns spartadata.model.upload
+(ns spartadata.model.sdmx.upload
   (:require [clojure.data.xml :as xml]
             [clojure.data.zip.xml :as zip-xml]
             [clojure.java.jdbc :as jdbc]

@@ -1,4 +1,4 @@
-(ns spartadata.model.enquire
+(ns spartadata.model.sdmx.enquire
   (:require [clojure.data.xml :as xml]
             [hugsql.core :as sql]
             [java-time]
