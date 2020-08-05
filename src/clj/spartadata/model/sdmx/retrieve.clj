@@ -49,27 +49,9 @@
 (declare retrieve-observations)
 (declare format-observation)
 
-(defn resolve-dataflows [dataflow datasets]
-  (reduce concat 
-          (for [agencyid (if (some #(= "all" %) (:agencyid dataflow)) 
-                           (map :agencyid datasets) 
-                           (:agencyid dataflow))] 
-            (reduce concat 
-                    (for [id (if (some #(= "all" %) (:id dataflow)) 
-                               (map :id datasets) 
-                               (:id dataflow))] 
-                      (for [version (if (some #(= "all" %) (:version dataflow)) 
-                                      (map :version datasets) 
-                                      (if (some #(= "latest" %) (:version dataflow)) 
-                                        (:version (first datasets)) 
-                                        (:version dataflow)))] 
-                        [agencyid id version]))))))
-
 (defn retrieve-data-message
-  [db {dataflow :flow-ref dimensions :key _ :provider-ref} {validate? :validate :or {validate? false} :as options}]
-  (let [datasets (get-datasets db)
-        dataflows (resolve-dataflows dataflow datasets) 
-        data-message (compile-data-message db dataflows dimensions options)]
+  [db dataflows {dimensions :key} {validate? :validate :or {validate? false} :as options}]
+  (let [data-message (compile-data-message db dataflows dimensions options)]
     (if (= "Error" (name (or (:tag data-message) :nil))) 
       (format-response data-message options)
       (if validate? 
@@ -117,9 +99,9 @@
     (if-not (empty? dataset-messages) 
       (format-data-message dataset-messages options) 
       (sdmx-error 100 (str "No data exist for query: Target: Dataflow"
-                           " - Agency Id: " (clojure.string/join "+" (map first dataflows))
-                           " - Maintainable Id: " (clojure.string/join "+" (map second dataflows))
-                           " - Version: " (clojure.string/join "+" (map last dataflows)))))))
+                           " - Agency Id: " (clojure.string/join "+" (map :agencyid dataflows))
+                           " - Maintainable Id: " (clojure.string/join "+" (map :id dataflows))
+                           " - Version: " (clojure.string/join "+" (map :version dataflows)))))))
 
 (defmulti format-data-message (fn [dataset-messages options] (:format options)))
 
@@ -152,8 +134,7 @@
 
 (defn retrieve-datasets [db dataflows dimensions options]
   (for [dataflow dataflows
-        :let [[agencyid id version] dataflow
-              dataset (get-dataset-and-attrs db {:agencyid agencyid :id id :version version})]
+        :let [dataset (get-dataset-and-attrs db dataflow)]
         :when dataset]
     (if-let [description (:releaseDescription options)]
       (let [release (first (sort-by #(levenshtein-distance (:description %) description) < (get-releases db dataset)))]
@@ -184,7 +165,7 @@
          {:Series (retrieve-series db dataset dimensions options)}))
 
 (defmethod format-dataset :application/xml
-  [db {attrs :attrs values :vals :as dataset} dimensions {[agencyid id version] :dataflow :as options}]
+  [db {attrs :attrs values :vals :as dataset} dimensions {{:keys [agencyid id version]} :dataflow :as options}]
   (let [ns1 (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")]
     (apply xml/element 
            (concat [(xml/qname ns1 "DataSet") 
