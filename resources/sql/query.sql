@@ -85,8 +85,7 @@ WHERE series.series_id=:series_id;
 -- :command :query
 -- :result :many
 -- :doc Return the dimensions corresponding to a map of :pos/:dataset_id. NB, the position of the dimension in the data structure definition is denoted by pos.
-SELECT 
-  dimension_id
+SELECT *
 FROM dimension
 WHERE pos = :pos
 AND dataset_id = :dataset_id;
@@ -95,8 +94,7 @@ AND dataset_id = :dataset_id;
 -- :command :query
 -- :result :many
 -- :doc Return the dimensions corresponding to a map of :v*:vals/:pos/:dataset_id. NB, the position of the dimension in the data structure definition is denoted by pos.
-SELECT 
-  dimension_id
+SELECT *
 FROM dimension
 WHERE val IN (:v*:vals)
 AND pos = :pos

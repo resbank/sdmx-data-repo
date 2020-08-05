@@ -12,33 +12,25 @@
 ;; Data API
 
 
-(defn data [{headers :headers {path-params :path query-params :query} :parameters :as request}]
-  (let [flow-ref-params (mapv #(clojure.string/split % #"\+") (clojure.string/split (:flow-ref path-params) #","))
-        key-params (if (and (:key path-params) (not= "all" (:key path-params))) 
-                     (mapv #(clojure.string/split % #"\+") (clojure.string/split (:key path-params) #"\." -1)) "all")
-        provider-ref-params (if (:provider-ref path-params) 
-                              (mapv #(clojure.string/split % #"\+") (clojure.string/split (:provider-ref path-params) #",")))
-        data-message (try (retrieve-data-message {:datasource (:conn request)}
-                                                 {:flow-ref (condp = (count flow-ref-params)
-                                                              1 (-> (zipmap [:id] flow-ref-params) (assoc :agencyid "all") (assoc :version "latest"))
-                                                              2 (-> (zipmap [:agencyid :id] flow-ref-params) (assoc :version "latest"))
-                                                              3 (zipmap [:agencyid :id :version] flow-ref-params)) 
-                                                  :provider-ref  (if provider-ref-params 
-                                                                   (condp = (count provider-ref-params)
-                                                                     1 (-> (zipmap [:id] provider-ref-params) (assoc :agencyid "all"))
-                                                                     2 (zipmap [:agencyid :id] provider-ref-params)))
-                                                  :key (if (not= "all" key-params) 
-                                                         (if (->> (map (partial reduce str) key-params) (reduce str) empty?) "all" key-params)
-                                                         key-params)}
-                                                 (update query-params :format (fn [fmt] (case fmt
-                                                                                          "json" :application/json
-                                                                                          "sdmx-2.0" :application/vnd.sdmx.compact+xml_version-2.0
-                                                                                          (-> (get headers "accept")
-                                                                                              (clojure.string/replace #";" "_")
-                                                                                              (clojure.string/replace #"=" "-")
-                                                                                              keyword)))))
-                          (catch Exception e (do (.printStackTrace e) (throw e))))]
-    (format-response data-message)))
+(defn data [{headers :headers query :sdmx-query {path-params :path query-params :query} :parameters :as request}]
+  (comment
+    (-> (try (retrieve-data-message {:datasource (:conn request)}
+                                    (:dataflows query)
+                                    {:key (if (and (:key path-params) (not= "all" (:key path-params))) 
+                                            (->> (clojure.string/split (:key path-params) #"\." -1)
+                                                 (mapv #(clojure.string/split % #"\+"))) 
+                                            "all")}
+                                    (update query-params :format (fn [fmt] (case fmt
+                                                                             "json" :application/json
+                                                                             "sdmx-2.0" :application/vnd.sdmx.compact+xml_version-2.0
+                                                                             (-> (get headers "accept")
+                                                                                 (clojure.string/replace #";" "_")
+                                                                                 (clojure.string/replace #"=" "-")
+                                                                                 keyword)))))
+             (catch Exception e (do (.printStackTrace e) (throw e))))
+        format-response))
+  {:status 200
+   :body query})
 
 (defn data-upload [{headers :headers {path-params :path query-params :query multipart :multipart} :parameters :as request}]
   (let [data-message (try (upload-data-message {:datasource (:conn request)} 

@@ -3,7 +3,6 @@
             [buddy.auth.backends.httpbasic :refer [http-basic-backend]]
             [buddy.auth.middleware :refer [wrap-authentication]]
             [clojure.data.xml :as xml]
-            [clojure.set :as sets]
             [clojure.string :as string]
             [hugsql.core :as sql]
             [reitit.middleware :as middleware]
@@ -60,7 +59,8 @@
 
 
 (defn on-error [_ value]
-  (if (= (str value) "No datasets found corresponding to the queried data flow.")
+  (if (or (= (str value) "Dataset(s) not found corresponding to the queried data flow.")
+          (= (str value) "Provision agreement(s) not found corresponding to this data query."))
     {:status 404
      :headers {"Content-Type" "application/xml"}
      :body (xml/emit-str (sdmx-error 100 (str "Not found. " value)))}
@@ -73,17 +73,17 @@
     (success "Authorisation confirmed.") 
     (error "Must authenticate successfully to perform this action.")))
 
-(defn should-have-provision-agreement [{user :identity data-query :sdmx-data-query}]
+(defn should-have-provision-agreement [{user :identity query :sdmx-query}]
   (if user
     (cond 
-      (empty? (:dataflows data-query))
-      (error "No datasets found corresponding to the queried data flow.")
+      (empty? query) 
+      (error "Provision agreement(s) not found corresponding to this data query.")
 
-      (empty? (:providers data-query))
-      (error "User not registered with any data providers.")
+      (not-every? identity (map :datastructure query))
+      (error "Dataset(s) not found corresponding to the queried data flow.")
 
-      (empty? (:agreements data-query)) 
-      (error "Must have a valid provision agreement to perform this action.")
+      (not-every? identity (map :dataprovider query))
+      (error "User not registered with requested data provider(s).")
 
       :else 
       (success "Authorisation confirmed."))
