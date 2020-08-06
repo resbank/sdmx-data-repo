@@ -67,9 +67,11 @@
                         io/resource io/input-stream  
                         xml/parse 
                         zip/xml-zip)
-          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
+          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" 
+                                             (string/join "," [agencyid id version]) "/"
+                                             "all/SARB.ERD,INTERNAL")
                                         {:basic-auth ["p512788" "password"]
-                                         :header {:accept "application/xml"}}) 
+                                         :headers {:accept "application/xml"}}) 
                             :body 
                             xml/parse-str 
                             zip/xml-zip)]
@@ -88,9 +90,11 @@
                         io/resource io/input-stream 
                         xml/parse 
                         zip/xml-zip)
-          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
+          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" 
+                                             (string/join "," [agencyid id version]) "/"
+                                             "all/SARB.ERD,INTERNAL")
                                         {:basic-auth ["p512788" "password"]
-                                         :header {:accept "application/xml"}
+                                         :headers {:accept "application/xml"}
                                          :query-params {:releaseDescription "First release"}}) 
                             :body 
                             xml/parse-str 
@@ -107,9 +111,11 @@
                         io/input-stream 
                         xml/parse 
                         zip/xml-zip)
-          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]) "/.1001")
+          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" 
+                                             (string/join "," [agencyid id version]) "/"
+                                             ".1001/SARB.ERD,INTERNAL")
                                         {:basic-auth ["p512788" "password"]
-                                         :header {:accept "application/xml"}}) 
+                                         :headers {:accept "application/xml"}}) 
                             :body 
                             xml/parse-str 
                             zip/xml-zip)]
@@ -129,9 +135,11 @@
                         io/resource io/input-stream 
                         xml/parse 
                         zip/xml-zip)
-          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
+          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" 
+                                             (string/join "," [agencyid id version]) "/"
+                                             "all/SARB.ERD,INTERNAL")
                                         {:basic-auth ["p512788" "password"]
-                                         :header {:accept "application/xml"}
+                                         :headers {:accept "application/xml"}
                                          :query-params {:releaseDescription "First"}}) 
                             :body 
                             xml/parse-str 
@@ -147,9 +155,11 @@
                         io/resource io/input-stream 
                         xml/parse 
                         zip/xml-zip)
-          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
+          from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" 
+                                             (string/join "," [agencyid id version]) "/"
+                                             "all/SARB.ERD,INTERNAL")
                                         {:basic-auth ["p512788" "password"]
-                                         :header {:accept "application/xml"}
+                                         :headers {:accept "application/vnd.sdmx.compact+xml;version=2.0"}
                                          :query-params {:releaseDescription "Sec release" 
                                                         :validate "true"}}) 
                             :body 
@@ -164,7 +174,8 @@
   (testing "Avaliable releases enquiry returns both the first and second release."
     ; Test that the third data message can be recovered (second release).
     ; Conditions: specify release (incomplete description).
-    (let [available-releases (-> (client/get (str "http://localhost:3030/sdmxapi/release/data/" (string/join "," [agencyid id version]))
+    (let [available-releases (-> (client/get (str "http://localhost:3030/sdmxapi/release/data/" 
+                                                  (string/join "," [agencyid id version]))
                                              {:basic-auth ["p512788" "password"]}) 
                                  :body 
                                  xml/parse-str 
@@ -181,16 +192,19 @@
       ; Rollback release.
       ; Test that the first data message can be recovered.
       ; Conditions: do not specify release.
-      (client/post (str "http://localhost:3030/sdmxapi/modify/data/" (string/join "," [agencyid id version]) "/rollback")
+      (client/post (str "http://localhost:3030/sdmxapi/modify/data/" 
+                        (string/join "," [agencyid id version]) "/rollback")
                    {:basic-auth ["p512788" "password"]})
       (let [from-file (-> "test_message_1.xml" 
                           io/resource 
                           io/input-stream  
                           xml/parse 
                           zip/xml-zip)
-            from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
+            from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" 
+                                               (string/join "," [agencyid id version]) "/"
+                                               "all/SARB.ERD,INTERNAL")
                                           {:basic-auth ["p512788" "password"]
-                                           :header {:accept "application/xml"}}) 
+                                           :headers {:accept "application/xml"}}) 
                               :body 
                               xml/parse-str 
                               zip/xml-zip )]
@@ -200,12 +214,14 @@
   ;; Test 8
 (testing "Delete the data set"
   ; Delete the data set
-  (client/delete (str "http://localhost:3030/sdmxapi/modify/data/" (string/join "," [agencyid id version]))
+  (client/delete (str "http://localhost:3030/sdmxapi/modify/data/" 
+                      (string/join "," [agencyid id version]))
                  {:basic-auth ["p512788" "password"]})
   (is (= "clj-http: status 404"
-         (try (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
+         (try (client/get (str "http://localhost:3030/sdmxapi/data/" 
+                               (string/join "," [agencyid id version]))
                           {:basic-auth ["p512788" "password"]
-                           :header {:accept "application/xml"}})
+                           :headers {:accept "application/xml"}})
               (catch Exception e (.getMessage e))))))
 
   ;; Take the server down.

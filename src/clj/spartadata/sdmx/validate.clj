@@ -25,15 +25,19 @@
 ;; Define multimethod
 
 
-(defmulti validate-data (fn [dataflow data-message opts] (:format opts)))
+(defmulti validate-data (fn [dataflow data-message opts] 
+                          (-> (:format opts)
+                              (clojure.string/replace #";" "_")
+                              (clojure.string/replace #"=" "-")
+                              keyword)))
 
 
 
 ;; Define methods for the varios message formats
 
 
-(defmethod validate-data "application/vnd.sdmx.compact+xml;version=2.0"
-  [[agencyid id version] data-message opts]
+(defmethod validate-data :application/vnd.sdmx.compact+xml_version-2.0
+  [{:keys [agencyid id version]} data-message opts]
   (let [dataflow (str (:sdmx-registry env) "/sdmxapi/rest/schema/dataflow/" agencyid  "/" id "/" version "?format=sdmx-2.0")]
     (with-open [message (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXMessage.xsd"))
                 structure (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXStructure.xsd"))

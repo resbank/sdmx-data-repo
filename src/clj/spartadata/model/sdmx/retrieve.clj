@@ -57,9 +57,9 @@
       (format-response data-message options)
       (if validate? 
         (if (= 1 (count query))
-          (if-let [validation-error (validate-data (first query) data-message options)]
-            (format-response validation-error options)
-            (format-response data-message options))
+          (if-let [validation-error (validate-data (:datastructure (first query)) data-message (assoc options :format content-type))]
+            (format-response validation-error (assoc options :format content-type))
+            (format-response data-message (assoc options :format content-type)))
           (format-response (sdmx-error 1001 "Validation not supported. Multiple dataflows/structures") options))
         (format-response data-message (assoc options :format content-type))))))
 
@@ -148,7 +148,7 @@
     (if-let [description (:releaseDescription options)]
       (let [release (first (sort-by #(levenshtein-distance (:description %) description) < (get-releases db dataset)))]
         (format-dataset db dataset dimensions (-> options 
-                                                  (assoc :query query)
+                                                  (assoc :datastructure (:datastructure query))
                                                   (assoc :releaseDescription (:description release))
                                                   (assoc :release (-> release
                                                                       :release
@@ -156,7 +156,7 @@
                                                                       str)))))
       (let [release (first (get-releases db dataset))]
         (format-dataset db dataset dimensions (-> options 
-                                                  (assoc :query query)
+                                                  (assoc :datastructure (:datastructure query))
                                                   (assoc :releaseDescription (:description release))
                                                   (dissoc :release)))))))
 
@@ -178,7 +178,7 @@
          {:Series (retrieve-series db dataset dimensions options)}))
 
 (defmethod format-dataset :application/xml
-  [db {attrs :attrs values :vals :as dataset} dimensions {{:keys [agencyid id version]} :dataflow :as options}]
+  [db {attrs :attrs values :vals :as dataset} dimensions {{:keys [agencyid id version]} :datastructure :as options}]
   (let [ns1 (str "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=" agencyid ":" id "(" version "):compact")]
     (apply xml/element 
            (concat [(xml/qname ns1 "DataSet") 
