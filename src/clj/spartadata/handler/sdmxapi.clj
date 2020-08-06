@@ -1,36 +1,37 @@
 (ns spartadata.handler.sdmxapi
-  (:require [spartadata.model.sdmx.delete :refer [delete-dataset]]
+  (:require [clojure.string :as string] 
+            [clojure.tools.logging :as log]
+            [spartadata.model.sdmx.delete :refer [delete-dataset]]
             [spartadata.model.sdmx.release :refer [add-release]]
             [spartadata.model.sdmx.retrieve :refer [retrieve-data-message]]
             [spartadata.model.sdmx.upload :refer [upload-data-message upload-historical-data-message]]
             [spartadata.model.sdmx.rollback :refer [rollback-release]]
             [spartadata.model.sdmx.enquire :refer [fetch-release]]
-            [spartadata.utilities :refer [format-response]]))
+            [spartadata.utilities :refer [format-error format-response]]))
 
 
 
 ;; Data API
 
 
-(defn data [{headers :headers query :sdmx-query {path-params :path query-params :query} :parameters :as request}]
-  (comment
-    (-> (try (retrieve-data-message {:datasource (:conn request)}
-                                    (:dataflows query)
-                                    {:key (if (and (:key path-params) (not= "all" (:key path-params))) 
-                                            (->> (clojure.string/split (:key path-params) #"\." -1)
-                                                 (mapv #(clojure.string/split % #"\+"))) 
-                                            "all")}
-                                    (update query-params :format (fn [fmt] (case fmt
-                                                                             "json" :application/json
-                                                                             "sdmx-2.0" :application/vnd.sdmx.compact+xml_version-2.0
-                                                                             (-> (get headers "accept")
-                                                                                 (clojure.string/replace #";" "_")
-                                                                                 (clojure.string/replace #"=" "-")
-                                                                                 keyword)))))
-             (catch Exception e (do (.printStackTrace e) (throw e))))
-        format-response))
-  {:status 200
-   :body query})
+(defn data 
+  [{connection :conn {content-type "accept"} :headers query :sdmx-query params :parameters}]
+  (let [{{query-key :key} :path query-params :query} params]
+    (-> (try (retrieve-data-message {:datasource connection}
+                                    content-type
+                                    query
+                                    (if (and query-key (not= "all" query-key)) 
+                                      (->> (clojure.string/split query-key #"\." -1)
+                                           (mapv #(into #{} (string/split % #"\+")))) 
+                                      "all")
+                                    query-params)
+             (catch Exception error 
+               (log/error error {:error "Error in model.sdmx/retrieve-data-message"
+                                 :query query
+                                 :query-key query-key
+                                 :query-parameters query-params})
+               (format-error content-type 500  "Failed to complete action; retrieve data message.")))
+        format-response)))
 
 (defn data-upload [{headers :headers {path-params :path query-params :query multipart :multipart} :parameters :as request}]
   (let [data-message (try (upload-data-message {:datasource (:conn request)} 

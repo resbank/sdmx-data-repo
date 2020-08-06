@@ -1,11 +1,10 @@
 (ns spartadata.model.sdmx.retrieve
   (:require [clojure.data.xml :as xml]
             [clojure.data.zip.xml :as zip-xml]
+            [clojure.string :as string]
             [clojure.zip :as zip]
-            [environ.core :refer [env]]
             [hugsql.core :as sql]
             [java-time]
-            [jsonista.core :as json]
             [spartadata.sdmx.errors :refer [sdmx-error]]
             [spartadata.sdmx.util :refer [levenshtein-distance]]
             [spartadata.sdmx.validate :refer [validate-data]]))
@@ -18,7 +17,9 @@
 (sql/def-db-fns "sql/query.sql")
 (sql/def-db-fns "sql/update.sql")
 
-
+(declare get-series-and-attrs)
+(declare get-series-and-attrs-from-ids)
+(declare get-series-dims-by-dataset)
 
 ;; Define globals
 
@@ -50,19 +51,24 @@
 (declare format-observation)
 
 (defn retrieve-data-message
-  [db dataflows {dimensions :key} {validate? :validate :or {validate? false} :as options}]
-  (let [data-message (compile-data-message db dataflows dimensions options)]
+  [db content-type query dimensions {validate? :validate :or {validate? false} :as options}]
+  (let [data-message (compile-data-message db query dimensions (assoc options :format content-type))]
     (if (= "Error" (name (or (:tag data-message) :nil))) 
       (format-response data-message options)
       (if validate? 
-        (if (= 1 (count dataflows))
-          (if-let [validation-error (validate-data (first dataflows) data-message options)]
+        (if (= 1 (count query))
+          (if-let [validation-error (validate-data (first query) data-message options)]
             (format-response validation-error options)
             (format-response data-message options))
           (format-response (sdmx-error 1001 "Validation not supported. Multiple dataflows/structures") options))
-        (format-response data-message options)))))
+        (format-response data-message (assoc options :format content-type))))))
 
-(defmulti format-response (fn [data-message options] (if (= "Error" (name (or (:tag data-message) :nil))) :error (:format options))))
+(defmulti format-response (fn [data-message options] (if (= "Error" (name (or (:tag data-message) :nil))) 
+                                                       :error 
+                                                       (-> (:format options)
+                                                           (clojure.string/replace #";" "_")
+                                                           (clojure.string/replace #"=" "-")
+                                                           keyword))))
 
 (defmethod format-response :error
   [data-message _]
@@ -94,16 +100,19 @@
 ;; Compile data message
 
 
-(defn compile-data-message [db dataflows dimensions options]
-  (let [dataset-messages (retrieve-datasets db dataflows dimensions options)]
+(defn compile-data-message [db query dimensions options]
+  (let [dataset-messages (retrieve-datasets db query dimensions options)]
     (if-not (empty? dataset-messages) 
       (format-data-message dataset-messages options) 
       (sdmx-error 100 (str "No data exist for query: Target: Dataflow"
-                           " - Agency Id: " (clojure.string/join "+" (map :agencyid dataflows))
-                           " - Maintainable Id: " (clojure.string/join "+" (map :id dataflows))
-                           " - Version: " (clojure.string/join "+" (map :version dataflows)))))))
+                           " - Agency Id: " (string/join "+" (map #(get-in % [:datastructure :agencyid]) query))
+                           " - Maintainable Id: " (string/join "+" (map #(get-in % [:datastructure :id]) query))
+                           " - Version: " (string/join "+" (map #(get-in % [:datastructure :version]) query)))))))
 
-(defmulti format-data-message (fn [dataset-messages options] (:format options)))
+(defmulti format-data-message (fn [dataset-messages options] (-> (:format options)
+                                                                 (clojure.string/replace #";" "_")
+                                                                 (clojure.string/replace #"=" "-")
+                                                                 keyword)))
 
 (defmethod format-data-message :application/json
   [dataset-messages options]
@@ -132,32 +141,36 @@
 ;; Collect datasets
 
 
-(defn retrieve-datasets [db dataflows dimensions options]
-  (for [dataflow dataflows
-        :let [dataset (get-dataset-and-attrs db dataflow)]
+(defn retrieve-datasets [db queries dimensions options]
+  (for [query queries
+        :let [dataset (get-dataset-and-attrs db (:datastructure query))]
         :when dataset]
     (if-let [description (:releaseDescription options)]
       (let [release (first (sort-by #(levenshtein-distance (:description %) description) < (get-releases db dataset)))]
         (format-dataset db dataset dimensions (-> options 
-                                                  (assoc :dataflow dataflow)
+                                                  (assoc :query query)
                                                   (assoc :releaseDescription (:description release))
                                                   (assoc :release (-> release
                                                                       :release
                                                                       java-time/local-date-time
                                                                       str)))))
-      (format-dataset db dataset dimensions (-> options 
-                                              (assoc :dataflow dataflow)
-                                              (dissoc :releaseDescription)
-                                              (dissoc :release))))))
+      (let [release (first (get-releases db dataset))]
+        (format-dataset db dataset dimensions (-> options 
+                                                  (assoc :query query)
+                                                  (assoc :releaseDescription (:description release))
+                                                  (dissoc :release)))))))
 
-(defmulti format-dataset (fn [db dataset dimensions options] (:format options)))
+(defmulti format-dataset (fn [_ _ _ options] (-> (:format options)
+                                                 (clojure.string/replace #";" "_")
+                                                 (clojure.string/replace #"=" "-")
+                                                 keyword)))
 
 (defmethod format-dataset :application/json
   [db {attrs :attrs values :vals :as dataset} dimensions options]
   (merge (if (:has_release_attr dataset)
-           (if (contains? options :releaseDescription) 
+           (if (contains? options :release) 
              {:RELEASE (:releaseDescription options)}
-             {:RELEASE "Unreleased"}) 
+             {:RELEASE (str "Previous release: " (:releaseDescription options))}) 
            {})
          (if (first (.getArray attrs)) 
            (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
@@ -170,9 +183,9 @@
     (apply xml/element 
            (concat [(xml/qname ns1 "DataSet") 
                     (merge (if (:has_release_attr dataset)
-                             (if (contains? options :releaseDescription) 
+                             (if (contains? options :release) 
                                {:RELEASE (:releaseDescription options)}
-                               {:RELEASE "Unreleased"}) 
+                               {:RELEASE (str "Previous release: " (:releaseDescription options))}) 
                              {})
                            (if (first (.getArray attrs)) 
                              (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
@@ -180,35 +193,51 @@
                     (retrieve-series db dataset dimensions (assoc options :ns1 ns1))]))))
 
 (defmethod format-dataset :default
-  [db dataset dimensions options]
+  [_ _ _ _]
   (sdmx-error 1002 "Format not supported. Unable to complete request."))
 
 
 
 ;; Collect series
 
+(defn retrieve-series 
+  [db dataset series-key {query :query :as options}]
+  (let [{{dimensions :dimensions} :datastructure {constraint :constraint} :contentconstraint} query
+        query-dimensions (cond
+                           (and constraint (not= "all" series-key))
+                           (reduce-kv (fn [m k v]
+                                        (update m k #(if % (clojure.set/intersection % v) v)))
+                                      (zipmap (map #(keyword (:id %)) dimensions) series-key)
+                                      constraint)
 
-(defn retrieve-series [db dataset dimensions options]
-  (let [dimension-sets (if (not= "all" dimensions) 
-                            (for [pos (map inc (range (count dimensions)))
-                                  :let [values (nth dimensions (dec pos))]]
-                              (map :dimension_id
-                                   (if (empty? (first values))
-                                     (get-dims-by-pos db (assoc dataset :pos pos))
-                                     (get-dims-by-vals db (merge dataset {:vals values :pos pos}))))))]
+                           (and  constraint (= "all" series-key))
+                           constraint
+
+                           (and (not constraint) (not= "all" series-key))
+                           (zipmap (map #(keyword (:id %)) dimensions) series-key)
+
+                           :else
+                           nil)
+        series-dimensions (group-by #(keyword (:dim %))
+                                    (get-series-dims-by-dataset db dataset))]
     (pmap #(format-series db % options)
-          (if (= "all" dimensions) 
-            (get-series-and-attrs db dataset)
-            (if (every? (comp not empty?) dimension-sets)
-              (->> (reduce #(clojure.set/intersection %1 %2) 
-                           (map #(into #{} (->> (match-series db {:dimension_ids %})
-                                                (map vals)
-                                                (reduce concat))) 
-                                dimension-sets))
-                   (hash-map :series_ids)
-                   (get-series-and-attrs-from-ids db)))))))
+          (if query-dimensions
+            (->> (reduce-kv (fn [m k v]
+                               (update m k (fn [series] (filter #(contains? v (:val %)) series))))
+                             series-dimensions
+                             query-dimensions)
+                  vals
+                  (map #(map :series_id %))
+                  (map #(into #{} %))
+                  (reduce clojure.set/intersection)
+                  (hash-map :series_ids)
+                  (get-series-and-attrs-from-ids db))
+            (get-series-and-attrs db dataset)))))
 
-(defmulti format-series (fn [db series options] (:format options)))
+(defmulti format-series (fn [_ _ options] (-> (:format options)
+                                              (clojure.string/replace #";" "_")
+                                              (clojure.string/replace #"=" "-")
+                                              keyword)))
 
 (defmethod format-series :application/json
   [db {series-id :series_id dims :dims dim-values :dim_vals attrs :attrs attr-values :attr_vals} options] 
@@ -235,7 +264,10 @@
          (get-obs-and-attrs-by-release db {:release release :series_id series-id})
          (get-obs-and-attrs db {:series_id series-id}))))
 
-(defmulti format-observation (fn [obs options] (:format options)))
+(defmulti format-observation (fn [obs options] (-> (:format options)
+                                                   (clojure.string/replace #";" "_")
+                                                   (clojure.string/replace #"=" "-")
+                                                   keyword)))
 
 (defmethod format-observation :application/json 
   [{time-period :time_period obs-value :obs_value attrs :attrs values :vals} _] 

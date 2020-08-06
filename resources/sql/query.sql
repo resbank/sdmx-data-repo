@@ -69,18 +69,6 @@ WHERE dim = :dim
 AND val = :val
 AND dataset_id = :dataset_id;
 
--- :name get-dims-by-series
--- :command :query
--- :result :many
--- :doc Return the dimensions corresponding to a map of :series_id.
-SELECT 
-  dim,
-  val
-FROM series 
-INNER JOIN series_dimension ON series_dimension.series_id = series.series_id
-INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
-WHERE series.series_id=:series_id;
-
 -- :name get-dims-by-pos
 -- :command :query
 -- :result :many
@@ -99,6 +87,31 @@ FROM dimension
 WHERE val IN (:v*:vals)
 AND pos = :pos
 AND dataset_id = :dataset_id;
+
+-- :name get-dims-by-series
+-- :command :query
+-- :result :many
+-- :doc Return the dimensions corresponding to a map of :series_id.
+SELECT 
+  dim,
+  val
+FROM series 
+INNER JOIN series_dimension ON series_dimension.series_id = series.series_id
+INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
+WHERE series.series_id=:series_id;
+
+-- :name get-series-dims-by-dataset
+-- :command :query
+-- :result :many
+-- :doc Return all :series_ids and associated dimensions correspoding to the given dataset.
+SELECT 
+  series.series_id,
+  dimension.dim,
+  dimension.val
+FROM series 
+INNER JOIN series_dimension ON series_dimension.series_id = series.series_id
+INNER JOIN dimension ON dimension.dimension_id = series_dimension.dimension_id
+WHERE series.dataset_id=:dataset_id;
 
 -- :name get-series
 -- :command :query

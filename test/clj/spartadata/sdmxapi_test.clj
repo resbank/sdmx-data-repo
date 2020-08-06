@@ -69,7 +69,7 @@
                         zip/xml-zip)
           from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
                                         {:basic-auth ["p512788" "password"]
-                                         :query-params {:format "sdmx-2.0"}}) 
+                                         :header {:accept "application/xml"}}) 
                             :body 
                             xml/parse-str 
                             zip/xml-zip)]
@@ -90,7 +90,8 @@
                         zip/xml-zip)
           from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
                                         {:basic-auth ["p512788" "password"]
-                                         :query-params {:format "sdmx-2.0" :releaseDescription "First release"}}) 
+                                         :header {:accept "application/xml"}
+                                         :query-params {:releaseDescription "First release"}}) 
                             :body 
                             xml/parse-str 
                             zip/xml-zip)]
@@ -108,7 +109,7 @@
                         zip/xml-zip)
           from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]) "/.1001")
                                         {:basic-auth ["p512788" "password"]
-                                         :query-params {:format "sdmx-2.0"}}) 
+                                         :header {:accept "application/xml"}}) 
                             :body 
                             xml/parse-str 
                             zip/xml-zip)]
@@ -130,7 +131,8 @@
                         zip/xml-zip)
           from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
                                         {:basic-auth ["p512788" "password"]
-                                         :query-params {:format "sdmx-2.0" :releaseDescription "First"}}) 
+                                         :header {:accept "application/xml"}
+                                         :query-params {:releaseDescription "First"}}) 
                             :body 
                             xml/parse-str 
                             zip/xml-zip )]
@@ -147,7 +149,9 @@
                         zip/xml-zip)
           from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
                                         {:basic-auth ["p512788" "password"]
-                                         :query-params {:format "sdmx-2.0" :releaseDescription "Sec release" :validate "true"}}) 
+                                         :header {:accept "application/xml"}
+                                         :query-params {:releaseDescription "Sec release" 
+                                                        :validate "true"}}) 
                             :body 
                             xml/parse-str 
                             zip/xml-zip )]
@@ -186,7 +190,7 @@
                           zip/xml-zip)
             from-database (-> (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
                                           {:basic-auth ["p512788" "password"]
-                                           :query-params {:format "sdmx-2.0"}}) 
+                                           :header {:accept "application/xml"}}) 
                               :body 
                               xml/parse-str 
                               zip/xml-zip )]
@@ -201,7 +205,7 @@
   (is (= "clj-http: status 404"
          (try (client/get (str "http://localhost:3030/sdmxapi/data/" (string/join "," [agencyid id version]))
                           {:basic-auth ["p512788" "password"]
-                           :query-params {:format "sdmx-2.0"}})
+                           :header {:accept "application/xml"}})
               (catch Exception e (.getMessage e))))))
 
   ;; Take the server down.
