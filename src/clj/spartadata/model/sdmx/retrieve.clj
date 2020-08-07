@@ -170,7 +170,7 @@
   (merge (if (:has_release_attr dataset)
            (if (contains? options :release) 
              {:RELEASE (:releaseDescription options)}
-             {:RELEASE (str "Previous release: " (:releaseDescription options))}) 
+             {:RELEASE (str "Unreleased, previous release: " (:releaseDescription options))}) 
            {})
          (if (first (.getArray attrs)) 
            (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
@@ -185,7 +185,7 @@
                     (merge (if (:has_release_attr dataset)
                              (if (contains? options :release) 
                                {:RELEASE (:releaseDescription options)}
-                               {:RELEASE (str "Previous release: " (:releaseDescription options))}) 
+                               {:RELEASE (str "Unreleased, previous release: " (:releaseDescription options))}) 
                              {})
                            (if (first (.getArray attrs)) 
                              (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
