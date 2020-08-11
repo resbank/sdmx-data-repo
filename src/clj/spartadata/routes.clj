@@ -16,6 +16,7 @@
             [spartadata.middleware.auth :as auth]
             [spartadata.middleware.conn :refer [conn]]
             [spartadata.middleware.data-query-resolution :refer [resolve-data-query]]
+            [spartadata.middleware.log :as log]
             [spartadata.sdmx.errors :refer [sdmx-error]]
             [spartadata.sdmx.spec]
             [muuntaja.core :as m]))
@@ -67,7 +68,7 @@
 
         ["" {:middleware [[auth/authorisation context]]}
 
-         ["/modify/data" 
+         ["/modify/data" {:middleware [log/data-change]}
 
           ["/{strict-flow-ref}"
            {:put {:tags ["Modify"]
@@ -104,23 +105,17 @@
          ["/release/data" 
 
           ["/{strict-flow-ref}"
-          {:get {:tags ["Release"]
-                 :summary "Get data set releases"
-                 :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
-                              :query :spartadata.sdmx.spec/data-releases-query-params}
-                 :handler sdmxapi/data-releases}
-           :post {:tags ["Release"]
-                  :summary "Update data set releases (add release)"
-                  :parameters {:path :spartadata.sdmx.spec/data-release-path-params
-                               :query :spartadata.sdmx.spec/data-release-query-params}
-                  :handler sdmxapi/data-release}}]
-          
-          ["/{strict-flow-ref}/historical"
-           {:post {:tags ["Release"]
-                  :summary "Update data set releases (add historical release)"
-                  :parameters {:path :spartadata.sdmx.spec/data-release-path-params
-                               :query :spartadata.sdmx.spec/data-release-hist-query-params}
-                  :handler sdmxapi/data-release-hist}}]]]]]
+           {:get {:tags ["Release"]
+                  :summary "Get data set releases"
+                  :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
+                               :query :spartadata.sdmx.spec/data-releases-query-params}
+                  :handler sdmxapi/data-releases}
+            :post {:middleware [log/data-change]
+                   :tags ["Release"]
+                   :summary "Update data set releases (add release)"
+                   :parameters {:path :spartadata.sdmx.spec/data-release-path-params
+                                :query :spartadata.sdmx.spec/data-release-query-params}
+                   :handler sdmxapi/data-release}}]]]]]
        
        ["/userapi" {:swagger {:id ::userapi}}
 
@@ -136,6 +131,20 @@
              :middleware [[auth/authentication (auth/backend connection-pool)]
                           [auth/authorisation context]]}
 
+         ["/log"
+          
+          ["/data"
+           {:get {:tags ["Log"]
+                  :parameters {:query :spartadata.sdmx.spec/log-query-params}
+                  :summary "Get data log"
+                  :handler userapi/retrieve-data-log}}]
+          
+          ["/users"
+           {:get {:tags ["Log"]
+                  :parameters {:query :spartadata.sdmx.spec/log-query-params}
+                  :summary "Get users log"
+                  :handler userapi/retrieve-user-log}}]]
+
          ["/users"
           {:get {:tags ["User"]
                  :summary "Get all users"
@@ -145,7 +154,8 @@
           {:get {:tags ["User"]
                  :summary "Get own user"
                  :handler userapi/retrieve-self}
-           :post {:tags ["User"]
+           :post {:middleware [log/user-change]
+                  :tags ["User"]
                   :parameters {:query :spartadata.sdmx.spec/user-self-query-params}
                   :summary "Update own user"
                   :handler userapi/update-self}}]
@@ -155,9 +165,9 @@
                  :summary "Get own user profile"
                  :handler userapi/retrieve-self-profile}}]
 
-         ["/user" 
+         ["/user" {:middleware [log/user-change]}
 
-          ["/{username}" 
+          ["/{username}"
            {:put {:tags ["User"]
                   :summary "Create user"
                   :parameters {:path :spartadata.sdmx.spec/user-path-params

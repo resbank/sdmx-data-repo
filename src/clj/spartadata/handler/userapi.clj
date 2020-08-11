@@ -1,8 +1,8 @@
 (ns spartadata.handler.userapi
   (:require [clojure.string :as string]
-            [clojure.tools.logging :as log]
+            [clojure.tools.logging :as logger]
             [spartadata.model.user.admin :as admin]
-;            [spartadata.model.user.log :as data-log]
+            [spartadata.model.user.log :as log]
             [spartadata.model.user.provider :as provider]
             [spartadata.model.user.role :as role]
             [spartadata.utilities :refer [format-error format-response]]))
@@ -16,7 +16,7 @@
   [{connection :conn {content-type "accept"} :headers}]
   (-> (try (admin/retrieve-all-users {:datasource connection} content-type) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/retrieve-all-users."
+             (logger/error error {:error "Error in admin/retrieve-all-users."
                                :user nil
                                :user-fields nil})
              (format-error content-type 500  "Failed to complete action; get all users.")))
@@ -27,7 +27,7 @@
   (-> (try (admin/retrieve-self content-type
                                 user) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/retrieve-self."
+             (logger/error error {:error "Error in admin/retrieve-self."
                                :user user
                                :user-fields nil})
              (format-error content-type 500  "Failed to complete action; get profile.")))
@@ -40,7 +40,7 @@
                               user
                               user-fields) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/update-self"
+             (logger/error error {:error "Error in admin/update-self"
                                :user (:username user)
                                :user-fields user-fields})
              (format-error content-type 500  "Failed to complete action; update self.")))
@@ -52,7 +52,7 @@
                                         content-type
                                         user) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/retrieve-self-profile."
+             (logger/error error {:error "Error in admin/retrieve-self-profile."
                                :user (:username user)
                                :user-fields nil})
              (format-error content-type 500  "Failed to complete action; get self profile.")))
@@ -65,7 +65,7 @@
                               user
                               user-fields) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/create-user."
+             (logger/error error {:error "Error in admin/create-user."
                                :user user
                                :user-fields user-fields})
              (format-error content-type 500 "Failed to complete action; create user.")))
@@ -77,7 +77,7 @@
                                 content-type
                                 user) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/retrieve-user."
+             (logger/error error {:error "Error in admin/retrieve-user."
                                :user user
                                :user-fields nil})
              (format-error content-type 500  "Failed to complete action; get user.")))
@@ -90,7 +90,7 @@
                               user
                               user-fields) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/update-user."
+             (logger/error error {:error "Error in admin/update-user."
                                :user user
                                :user-fields user-fields})
              (format-error content-type 500  "Failed to complete action; update user.")))
@@ -102,7 +102,7 @@
                               content-type
                               user) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/remove-user."
+             (logger/error error {:error "Error in admin/remove-user."
                                :user user
                                :user-fields nil})
              (format-error content-type 500  "Failed to complete action; remove user.")))
@@ -114,7 +114,7 @@
                                    content-type
                                    user) 
            (catch Exception error 
-             (log/error error {:error "Error in admin/retrieve-user."
+             (logger/error error {:error "Error in admin/retrieve-user."
                                :user user
                                :user-fields nil})
              (format-error content-type 500"Failed to complete action; get profile.")))
@@ -131,7 +131,7 @@
                                                 content-type
                                                 user) 
            (catch Exception error 
-             (log/error error {:error "Error in provider/retrieve-providers."
+             (logger/error error {:error "Error in provider/retrieve-providers."
                                :user user
                                :provider nil})
              (format-error content-type 500  "Failed to complete action; get providers by user.")))
@@ -145,7 +145,7 @@
                                      (->> (string/split (:strict-provider-ref path-params) #",")
                                           (zipmap [:agencyid :id]))) 
            (catch Exception error 
-             (log/error error {:error "Error in provider/create-provider."
+             (logger/error error {:error "Error in provider/create-provider."
                                :user (:username path-params)
                                :provider (:strict-provider-ref path-params)})
              (format-error content-type 500  "Failed to complete action; create provider..")))
@@ -159,7 +159,7 @@
                                      (->> (string/split (:strict-provider-ref path-params) #",")
                                           (zipmap [:agencyid :id]))) 
            (catch Exception error 
-             (log/error error {:error "Error in provider/remove-provider."
+             (logger/error error {:error "Error in provider/remove-provider."
                                :user (:username path-params)
                                :provider (:strict-provider-ref path-params)})
              (format-error content-type 500  "Failed to complete action; remove provider.")))
@@ -176,7 +176,7 @@
                                 content-type
                                 user) 
            (catch Exception error 
-             (log/error error {:error "Error in role/retrieve-role."
+             (logger/error error {:error "Error in role/retrieve-role."
                                :user user
                                :role nil})
              (format-error content-type 500  "Failed to complete action; get roles.")))
@@ -191,7 +191,7 @@
                                      (->> (string/split (:strict-flow-ref path-params) #",")
                                           (zipmap [:agencyid :id :version]))) 
            (catch Exception error 
-             (log/error error {:error "Error in role/create-role"
+             (logger/error error {:error "Error in role/create-role"
                                :user (:username path-params)
                                :role (:role path-params)
                                :dataflow (:strict-flow-ref path-params)})
@@ -207,7 +207,7 @@
                                      (->> (string/split (:strict-flow-ref path-params) #",")
                                           (zipmap [:agencyid :id :version]))) 
            (catch Exception error 
-             (log/error error {:error "Error in role/remove-role."
+             (logger/error error {:error "Error in role/remove-role."
                                :user (:username path-params)
                                :role (:role path-params)
                                :dataflow (:strict-flow-ref path-params)})
@@ -217,3 +217,26 @@
 
 
 ;; Log
+
+
+(defn retrieve-data-log
+  [{connection :conn {content-type "accept"} :headers {date :query} :parameters}]
+  (-> (try (log/retrieve-data-log {:datasource connection} 
+                                  content-type
+                                  date) 
+           (catch Exception error 
+             (logger/error error {:error "Error in role/retrieve-data-log."
+                               :date date})
+             (format-error content-type 500  "Failed to complete action; get data log")))
+      format-response))
+
+(defn retrieve-user-log
+  [{connection :conn {content-type "accept"} :headers {date :query} :parameters}]
+  (-> (try (log/retrieve-user-log {:datasource connection} 
+                                  content-type
+                                  date) 
+           (catch Exception error 
+             (logger/error error {:error "Error in role/retrieve-user-log."
+                               :date date})
+             (format-error content-type 500  "Failed to complete action; get user log")))
+      format-response))

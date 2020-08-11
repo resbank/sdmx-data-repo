@@ -348,32 +348,64 @@ AND dataset_id=:dataset_id;
 --------------------------------------------------------------------------------
 
 
--- :name get-data-set-log
+-- :name get-data-log
 -- :command :query
 -- :result :many
 -- :doc Return data set log.
-SELECT *
-FROM dataset_log;
+SELECT 
+  dataset_log.modified,
+  dataset_log.action,
+  authentication.username,
+  dataset.agencyid,
+  dataset.id,
+  dataset.version
+FROM dataset_log
+INNER JOIN authentication ON authentication.user_id=dataset_log.user_id
+INNER JOIN dataset ON dataset.dataset_id=dataset_log.dataset_id
+ORDER BY dataset_log.modified DESC;
 
--- :name get-data-set-log-by-date
+-- :name get-data-log-by-date
 -- :command :query
 -- :result :many
 -- :doc Return data set log starting at :startdate.
-SELECT *
+SELECT 
+  dataset_log.modified,
+  dataset_log.action,
+  authentication.username,
+  dataset.agencyid,
+  dataset.id,
+  dataset.version
 FROM dataset_log
-WHERE modified > :startdate::TIMESTAMP;
+INNER JOIN authentication ON authentication.user_id=dataset_log.user_id
+INNER JOIN dataset ON dataset.dataset_id=dataset_log.dataset_id
+WHERE dataset_log.modified > :afterDateTime::TIMESTAMP
+ORDER BY dataset_log.modified DESC;
 
--- :name get-usr-log
+-- :name get-user-log
 -- :command :query
 -- :result :many
 -- :doc Return user log.
-SELECT *
-FROM usr_log;
+SELECT 
+  usr_log.modified,
+  usr_log.action,
+  admin.username AS admin_user,
+  target.username AS target_user
+FROM usr_log
+INNER JOIN authentication AS admin ON admin.user_id=usr_log.admin_user_id
+INNER JOIN authentication AS target ON target.user_id=usr_log.target_user_id
+ORDER BY usr_log.modified DESC;
 
--- :name get-usr-log-by-date
+-- :name get-user-log-by-date
 -- :command :query
 -- :result :many
 -- :doc Return user log starting at :startdate.
-SELECT *
+SELECT 
+  usr_log.modified,
+  usr_log.action,
+  admin.username AS admin_user,
+  target.username AS target_user
 FROM usr_log
-WHERE modified > :startdate::TIMESTAMP;
+INNER JOIN authentication AS admin ON admin.user_id=usr_log.admin_user_id
+INNER JOIN authentication AS target ON target.user_id=usr_log.target_user_id
+WHERE usr_log.modified > :afterDateTime::TIMESTAMP
+ORDER BY usr_log.modified DESC;

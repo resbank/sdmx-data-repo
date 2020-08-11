@@ -143,13 +143,23 @@ VALUES (:agencyid, :id, :user_id);
 -- :result :affected
 -- :doc Insert data set log entry.
 INSERT INTO dataset_log (action, user_id, dataset_id)
-VALUES (:action, :user_id, :dataset_id);
+SELECT 
+:action::ACTION_ENUM AS action,
+:user_id AS user_id,
+(SELECT dataset_id 
+  FROM dataset 
+  WHERE agencyid=:agencyid 
+  AND id=:id 
+  AND version=:version) AS dataset_id;
 
 -- :name insert-usr-log-entry
 -- :command :execute
 -- :result :affected
 -- :doc Insert user log entry.
 INSERT INTO usr_log (action, admin_user_id, target_user_id)
-VALUES (:action, :admin_user_id, :target_user_id);
-
-
+SELECT
+:action::USR_ACTION_ENUM AS action,
+:admin_user_id AS admin_user_id,
+(SELECT user_id
+  FROM authentication
+  WHERE username=:target_user_username) AS target_user_id;

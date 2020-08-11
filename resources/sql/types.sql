@@ -14,7 +14,7 @@ DROP TYPE role_enum;
 -- :command :execute
 -- :result :raw
 -- :doc Create an enumerated type, action_enum.
-CREATE TYPE action_enum AS ENUM ('delete', 'upload', 'hist_upload', 'release', 'rollback');
+CREATE TYPE action_enum AS ENUM ('create', 'upload', 'delete', 'hist_upload', 'release', 'rollback');
 
 -- :name drop-action-type
 -- :command :execute

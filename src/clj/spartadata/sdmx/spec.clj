@@ -150,3 +150,5 @@
 (s/def ::user-create-query-params (s/keys :req-un [::firstname ::lastname ::password ::email ::is_admin]))
 (s/def ::user-update-query-params (s/keys :opt-un [::firstname ::lastname ::password ::email ::is_admin]))
 (s/def ::user-self-query-params (s/keys :opt-un [::firstname ::lastname ::password ::email]))
+
+(s/def ::log-query-params (s/keys :opt-un [::afterDateTime]))
