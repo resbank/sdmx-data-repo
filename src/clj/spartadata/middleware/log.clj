@@ -86,8 +86,8 @@
         (when (= 200 (:status response))
           (insert-usr-log-entry {:datasource connection}
                                 (-> action
-                                    (assoc :admin_user_id (:user_id user))
-                                    (assoc :target_user_username username))))
+                                    (assoc :admin_username (:username user))
+                                    (assoc :target_usr_username username))))
         response)
       (handler request))))
 

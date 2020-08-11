@@ -243,10 +243,12 @@ DROP TABLE IF EXISTS provider;
 -- :doc Create table that logs changes to datasets by user ID, if it doesn't already exist.
 CREATE TABLE IF NOT EXISTS dataset_log (
   log_id SERIAL PRIMARY KEY,
-  action ACTION_ENUM NOT NULL,
   modified TIMESTAMP DEFAULT current_timestamp NOT NULL,
-  user_id INTEGER REFERENCES authentication(user_id) NOT NULL,
-  dataset_id INTEGER REFERENCES dataset(dataset_id) NOT NULL
+  action ACTION_ENUM NOT NULL,
+  username VARCHAR(50) NOT NULL CHECK (username=upper(username)),
+  agencyid VARCHAR(50) NOT NULL,
+  id VARCHAR(50) NOT NULL,
+  version VARCHAR(5) NOT NULL
 );
 
 -- :name drop-dataset-log-table
@@ -261,10 +263,10 @@ DROP TABLE IF EXISTS dataset_log;
 -- :doc Create table that logs changes to users by user ID, if it doesn't already exist.
 CREATE TABLE IF NOT EXISTS usr_log (
   log_id SERIAL PRIMARY KEY,
-  action USR_ACTION_ENUM NOT NULL,
   modified TIMESTAMP DEFAULT current_timestamp NOT NULL,
-  admin_user_id INTEGER REFERENCES authentication(user_id) NOT NULL,
-  target_user_id  INTEGER REFERENCES authentication(user_id) NOT NULL
+  action USR_ACTION_ENUM NOT NULL,
+  admin VARCHAR(50) NOT NULL CHECK (admin=upper(admin)),
+  usr VARCHAR(50) NOT NULL CHECK (usr=upper(usr))
 );
 
 -- :name drop-usr-log-table
