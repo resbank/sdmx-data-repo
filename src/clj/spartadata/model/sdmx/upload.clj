@@ -40,16 +40,12 @@
   If release? evaluates to 'true' the upload is considered to be the final version of the data preceding the next release. 
   A description of the data release may be provided"
   (let [{:keys [agencyid id version]} dataflow]
-    (if-let [result (if validate? (validate-data dataflow 
-                                                 data-message 
-                                                 (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0")))]
-      {:error (-> result 
-                  zip/xml-zip 
-                  (zip-xml/xml1-> ::messg/ErrorMessage)
-                  zip/node
-                  (get-in [:attrs :code]))
+    (if-let [result (when validate? (validate-data dataflow 
+                                                   data-message 
+                                                   (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0")))]
+      {:error 1000
        :content-type "application/xml"
-       :content (xml/emit-str result)}
+       :content result}
       (with-open [data-message (clojure.java.io/input-stream data-message)] 
         (let [data-zipper (-> data-message xml/parse zip/xml-zip)
               components (get-components agencyid id version)
@@ -187,16 +183,12 @@
   with the further requirement that it must follow chronologically from the previous release - but must be before the current time. A description 
   of the release may also be specified. This function is used for initialising the database, don't use it unless you are sure of how it works."
   (let [{:keys [agencyid id version]} dataflow]
-    (if-let [result (if validate? (validate-data dataflow 
-                                                 data-message 
-                                                 (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0")))]
-      {:error (-> result 
-                  zip/xml-zip 
-                  (zip-xml/xml1-> ::messg/ErrorMessage)
-                  zip/node
-                  (get-in [:attrs :code]))
+    (if-let [result (when validate? (validate-data dataflow 
+                                                   data-message 
+                                                   (assoc options :format "application/vnd.sdmx.compact+xml;version=2.0")))]
+      {:error 1000
        :content-type "application/xml"
-       :content (xml/emit-str result)}
+       :content result}
       (with-open [data-message (clojure.java.io/input-stream data-message)]
         (let [data-zipper (-> data-message xml/parse zip/xml-zip)
               components (get-components agencyid id version)

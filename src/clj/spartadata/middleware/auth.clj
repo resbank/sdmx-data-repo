@@ -2,7 +2,6 @@
   (:require [buddy.auth.accessrules :refer [success error wrap-access-rules]]
             [buddy.auth.backends.httpbasic :refer [http-basic-backend]]
             [buddy.auth.middleware :refer [wrap-authentication]]
-            [clojure.data.xml :as xml]
             [clojure.string :as string]
             [hugsql.core :as sql]
             [reitit.middleware :as middleware]
@@ -63,10 +62,10 @@
           (= (str value) "Provision agreement(s) not found corresponding to this data query."))
     {:status 404
      :headers {"Content-Type" "application/xml"}
-     :body (xml/emit-str (sdmx-error 100 (str "Not found. " value)))}
+     :body (sdmx-error 100 (str "Not found. " value))}
     {:status 401
      :headers {"Content-Type" "application/xml"}
-     :body (xml/emit-str (sdmx-error 110 (str "Not authorised. " value)))}))
+     :body (sdmx-error 100 (str "Not found. " value))}))
 
 (defn should-be-authenticated [request]
   (if (:identity request)

@@ -4,7 +4,7 @@
             [environ.core :refer [env]]
             [spartadata.sdmx.errors :refer [sdmx-error]])
   (:import [javax.xml XMLConstants transform.Source transform.stream.StreamSource validation.SchemaFactory validation.Schema validation.Validator]
-           [org.xml sax.SAXException]))
+           [org.xml.sax SAXException]))
 
 
 
@@ -18,14 +18,15 @@
         (.newSchema schema)
         (.newValidator)
         (.validate xml))
-    (catch SAXException error (sdmx-error 1000 (str "Validation failed. " (.getMessage error))))))
+    (catch SAXException error 
+      (sdmx-error 1000 (str "Validation failed. " (.getMessage error))))))
 
 
 
 ;; Define multimethod
 
 
-(defmulti validate-data (fn [dataflow data-message opts] 
+(defmulti validate-data (fn [_ _ opts] 
                           (-> (:format opts)
                               (clojure.string/replace #";" "_")
                               (clojure.string/replace #"=" "-")
@@ -37,7 +38,7 @@
 
 
 (defmethod validate-data :application/vnd.sdmx.compact+xml_version-2.0
-  [{:keys [agencyid id version]} data-message opts]
+  [{:keys [agencyid id version]} data-message _]
   (let [dataflow (str (:sdmx-registry env) "/sdmxapi/rest/schema/dataflow/" agencyid  "/" id "/" version "?format=sdmx-2.0")]
     (with-open [message (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXMessage.xsd"))
                 structure (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXStructure.xsd"))
@@ -52,9 +53,14 @@
                 metadata-report (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/SDMXMetadataReport.xsd"))
                 xml (clojure.java.io/input-stream  (clojure.java.io/resource "schema/v2_0/xml.xsd"))
                 data-message (cond
-                               (string? data-message) (clojure.java.io/reader (char-array data-message))
-                               (instance? clojure.data.xml.node.Element data-message) (clojure.java.io/reader (char-array (xml/emit-str data-message)))
-                               :else (clojure.java.io/input-stream data-message))]
+                               (string? data-message) 
+                               (clojure.java.io/reader (char-array data-message))
+
+                               (instance? clojure.data.xml.node.Element data-message) 
+                               (clojure.java.io/reader (char-array (xml/emit-str data-message)))
+
+                               :else 
+                               (clojure.java.io/input-stream data-message))]
       (validate-xml (into-array [(StreamSource. xml)
                                  (StreamSource. common)
                                  (StreamSource. structure)

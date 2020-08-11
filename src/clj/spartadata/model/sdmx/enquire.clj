@@ -28,7 +28,7 @@
         (if (empty? releases)
           {:error 100
            :content-type "application/xml"
-           :content (xml/emit-str (sdmx-error 100 "No results found."))}
+           :content (sdmx-error 100 "No results found.")}
           {:error 0
            :content-type "application/xml"
            :content (xml/emit-str (xml/element :Releases {}
@@ -40,8 +40,8 @@
                                                  (xml/element :Release {:Description (:description release) :Date (:release release)}))))}))
       {:error 100
        :content-type "application/xml"
-       :content (xml/emit-str (sdmx-error 100 (str "No data exist for query: Target: Dataflow"
+       :content (sdmx-error 100 (str "No data exist for query: Target: Dataflow"
                                                    " - Agency Id: " agencyid 
                                                    " - Maintainable Id: " id
-                                                   " - Version: " version)))})))
+                                                   " - Version: " version))})))
 

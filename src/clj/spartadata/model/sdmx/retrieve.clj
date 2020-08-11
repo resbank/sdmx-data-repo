@@ -63,7 +63,8 @@
           (format-response (sdmx-error 1001 "Validation not supported. Multiple dataflows/structures") options))
         (format-response data-message (assoc options :format content-type))))))
 
-(defmulti format-response (fn [data-message options] (if (= "Error" (name (or (:tag data-message) :nil))) 
+(defmulti format-response (fn [data-message options] (if (and (:tag data-message) 
+                                                              (= "Error" (name (:tag data-message))))  
                                                        :error 
                                                        (-> (:format options)
                                                            (clojure.string/replace #";" "_")
@@ -72,13 +73,9 @@
 
 (defmethod format-response :error
   [data-message _]
-  {:error (-> data-message 
-              zip/xml-zip 
-              (zip-xml/xml1-> ::messg/ErrorMessage)
-              zip/node
-              (get-in [:attrs :code]))
+  {:error 500
    :content-type "application/xml"
-   :content (xml/emit-str data-message)})
+   :content data-message})
 
 (defmethod format-response :application/json
   [data-message _]
