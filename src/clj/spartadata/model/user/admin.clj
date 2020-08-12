@@ -35,12 +35,13 @@
 
 (defmulti format-users 
   (fn [content-type _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-users :application/json
+(defmethod format-users :default
   [_ users]
   (if (first users)
     {:error 0
@@ -84,12 +85,13 @@
 
 (defmulti format-modify-user
   (fn [content-type _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-modify-user :application/json
+(defmethod format-modify-user :default
   [_ result]
   (if (= 1 result)
     {:error 0
@@ -139,12 +141,13 @@
 
 (defmulti format-profile 
   (fn [content-type _ _ _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-profile :application/json
+(defmethod format-profile :default
   [_ user providers roles]
   (if user
     {:error 0

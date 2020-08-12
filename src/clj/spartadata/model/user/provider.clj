@@ -25,12 +25,13 @@
 
 (defmulti format-providers 
   (fn [content-type _ _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-providers :application/json
+(defmethod format-providers :default
   [_ {username :username} providers]
   (if username
     (if (first providers)
@@ -81,12 +82,13 @@
 
 (defmulti format-modify-provider
   (fn [content-type _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-modify-provider :application/json
+(defmethod format-modify-provider :default
   [_ result]
   (if (= 1 result)
     {:error 0

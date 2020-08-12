@@ -21,12 +21,13 @@
 
 (defmulti format-dataset-log 
   (fn [content-type _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-dataset-log :application/json
+(defmethod format-dataset-log :default
   [_ log-entries]
   (if (first log-entries)
     {:error 0
@@ -68,12 +69,13 @@
 
 (defmulti format-user-log 
   (fn [content-type _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-user-log :application/json
+(defmethod format-user-log :default
   [_ log-entries]
   (if (first log-entries)
     {:error 0

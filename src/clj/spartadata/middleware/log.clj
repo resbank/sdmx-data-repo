@@ -58,12 +58,12 @@
 
 (defn get-user-action [{uri :uri method :request-method}]
   (cond (and (re-find #"^/userapi/user/[^/]+/provider/.+" uri) 
-             (or (= :post method) (= :delete method)))
-        {:action "modify_role"}
+             (or (= :put method) (= :delete method)))
+        {:action "modify_provider"}
 
         (and (re-find #"^/userapi/user/[^/]+/role/.+" uri) 
-             (or (= :post method) (= :delete method)))
-        {:action "modify_provider"}
+             (or (= :put method) (= :delete method)))
+        {:action "modify_role"}
         
         (and (re-find #"^/userapi/user/.+" uri) 
              (= :put method))

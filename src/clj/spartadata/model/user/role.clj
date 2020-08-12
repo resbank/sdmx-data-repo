@@ -27,12 +27,13 @@
 
 (defmulti format-roles 
   (fn [content-type _ _]
-    (-> content-type
-        (clojure.string/replace #";" "_")
-        (clojure.string/replace #"=" "-")
-        keyword)))
+    (when content-type
+      (-> content-type
+          (clojure.string/replace #";" "_")
+          (clojure.string/replace #"=" "-")
+          keyword))))
 
-(defmethod format-roles :application/json
+(defmethod format-roles :default
   [_ {username :username}  roles]
   (if username
     (if (first roles)
@@ -87,12 +88,13 @@
 
   (defmulti format-modify-role
     (fn [content-type _]
-      (-> content-type
-          (clojure.string/replace #";" "_")
-          (clojure.string/replace #"=" "-")
-          keyword)))
+      (when content-type
+        (-> content-type
+            (clojure.string/replace #";" "_")
+            (clojure.string/replace #"=" "-")
+            keyword))))
 
-  (defmethod format-modify-role :application/json
+  (defmethod format-modify-role :default
     [_ result]
     (if (= 1 result)
       {:error 0
