@@ -145,7 +145,7 @@
     (if-let [description (:releaseDescription options)]
       (let [release (first (sort-by #(levenshtein-distance (:description %) description) < (get-releases db dataset)))]
         (format-dataset db dataset dimensions (-> options 
-                                                  (assoc :datastructure (:datastructure query))
+                                                  (assoc :query query)
                                                   (assoc :releaseDescription (:description release))
                                                   (assoc :release (-> release
                                                                       :release
@@ -153,7 +153,7 @@
                                                                       str)))))
       (let [release (first (get-releases db dataset))]
         (format-dataset db dataset dimensions (-> options 
-                                                  (assoc :datastructure (:datastructure query))
+                                                  (assoc :query query)
                                                   (assoc :releaseDescription (:description release))
                                                   (dissoc :release)))))))
 
@@ -203,7 +203,7 @@
         query-dimensions (cond
                            (and constraint (not= "all" series-key))
                            (reduce-kv (fn [m k v]
-                                        (update m k #(if % (clojure.set/intersection % v) v)))
+                                        (update m k #(if (seq %) (clojure.set/intersection % v) v)))
                                       (zipmap (map #(keyword (:id %)) dimensions) series-key)
                                       constraint)
 
@@ -220,15 +220,16 @@
     (pmap #(format-series db % options)
           (if query-dimensions
             (->> (reduce-kv (fn [m k v]
-                               (update m k (fn [series] (filter #(contains? v (:val %)) series))))
-                             series-dimensions
-                             query-dimensions)
-                  vals
-                  (map #(map :series_id %))
-                  (map #(into #{} %))
-                  (reduce clojure.set/intersection)
-                  (hash-map :series_ids)
-                  (get-series-and-attrs-from-ids db))
+                              (update m k (fn [series] (filter #(contains? v (:val %)) series))))
+                            series-dimensions
+                            query-dimensions)
+                 vals
+                 (map #(map :series_id %))
+                 (map #(into #{} %))
+                 (filter seq)
+                 (reduce clojure.set/intersection)
+                 (hash-map :series_ids)
+                 (get-series-and-attrs-from-ids db))
             (get-series-and-attrs db dataset)))))
 
 (defmulti format-series (fn [_ _ options] (-> (:format options)
