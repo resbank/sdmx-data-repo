@@ -227,13 +227,7 @@
 
       (cond-> {:exception pretty/exception
                :data {:coercion reitit.coercion.spec/coercion
-                      :muuntaja (m/create
-                                  (assoc-in
-                                    m/default-options
-                                    [:formats "application/json" :encoder-opts]
-                                    {:encoders {java.lang.Double #(if (java.lang.Double/isNaN %1) 
-                                                                    (.writeNull %2) 
-                                                                    (.writeNumber %2 %1))}}))
+                      :muuntaja m/instance
                       :middleware [swagger/swagger-feature
                                    parameters/parameters-middleware
                                    muuntaja/format-negotiate-middleware
