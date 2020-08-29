@@ -269,13 +269,15 @@
 
 (defmethod format-observation :application/json 
   [{time-period :time_period obs-value :obs_value attrs :attrs values :vals} _] 
-  (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
-      (assoc :TIME_PERIOD time-period) 
-      (assoc :OBS_VALUE obs-value)))
+  (into (sorted-map)
+        (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
+            (assoc :TIME_PERIOD time-period) 
+            (assoc :OBS_VALUE obs-value))))
 
 (defmethod format-observation :application/xml
   [{time-period :time_period obs-value :obs_value attrs :attrs values :vals} {ns1 :ns1}] 
   (xml/element (xml/qname ns1 "Obs") 
-               (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
-                   (assoc :TIME_PERIOD time-period) 
-                   (assoc :OBS_VALUE obs-value))))
+               (into (sorted-map)
+                     (-> (zipmap (mapv keyword (.getArray attrs)) (into [] (.getArray values))) 
+                         (assoc :TIME_PERIOD time-period) 
+                         (assoc :OBS_VALUE obs-value)))))
