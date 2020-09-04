@@ -144,7 +144,9 @@
                     obs-value (Double/parseDouble (:OBS_VALUE candidate))
                     attrs (-> candidate (dissoc :TIME_PERIOD) (dissoc :OBS_VALUE))]]
         (if-let [current (first (filter #(= time-period (:time_period %)) observations))]
-          (if (> (Math/abs (- obs-value (:obs_value current))) (Math/ulp (:obs_value current)))
+          (if (or (java.lang.Double/isNaN obs-value)
+                  (java.lang.Double/isNaN (:obs_value current))
+                  (> (Math/abs (- obs-value (:obs_value current))) (Math/ulp (:obs_value current))))
             (if (java-time/before? (java-time/local-date-time (:created current)) previous-release)
               ;; Observation value has changed and current observation is released => create new observation with attributes
               (let [{obs-id :observation_id} (upsert-obs tx {:created timestamp 
