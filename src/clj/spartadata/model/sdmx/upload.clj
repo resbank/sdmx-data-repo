@@ -144,31 +144,26 @@
                     obs-value (Double/parseDouble (:OBS_VALUE candidate))
                     attrs (-> candidate (dissoc :TIME_PERIOD) (dissoc :OBS_VALUE))]]
         (if-let [current (first (filter #(= time-period (:time_period %)) observations))]
-          (if (or (java.lang.Double/isNaN obs-value)
-                  (java.lang.Double/isNaN (:obs_value current))
-                  (> (Math/abs (- obs-value (:obs_value current))) (Math/ulp (:obs_value current))))
+          (when (or (> (Math/abs (- obs-value (:obs_value current))) (Math/ulp (:obs_value current)))
+                    (not= (zipmap (mapv keyword (.getArray (:attrs current))) (into [] (.getArray (:vals current)))) attrs)
+                    (and (java.lang.Double/isNaN obs-value) (not (java.lang.Double/isNaN (:obs_value current))))
+                    (and (not (java.lang.Double/isNaN obs-value)) (java.lang.Double/isNaN (:obs_value current))))
             (if (java-time/before? (java-time/local-date-time (:created current)) previous-release)
-              ;; Observation value has changed and current observation is released => create new observation with attributes
+              ;; Observation has changed and current observation is released => create new observation
               (let [{obs-id :observation_id} (upsert-obs tx {:created timestamp 
                                                              :time_period time-period 
                                                              :obs_value obs-value 
                                                              :series_id (:series_id series)})]
                 (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) obs-id])}))
-              ;; Observation value has changed but current observation is not released => update observation (and attributes if necessary)
+              ;; Observation has changed but current observation is not released => update observation 
               (do (upsert-obs tx (assoc current :obs_value obs-value))
-                  (let [current-attrs (zipmap (mapv keyword (.getArray (:attrs current))) (into [] (.getArray (:vals current))))]
-                    (if-not (= current-attrs attrs)
-                      (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) (:observation_id current)])})))))
-            ;; Observation value has not changed => update attributes if necessary
-            (let [current-attrs (zipmap (mapv keyword (.getArray (:attrs current))) (into [] (.getArray (:vals current))))]
-                    (if-not (= current-attrs attrs)
-                      (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) (:observation_id current)])}))))
-          ;; Observation did not previously exist => create new observation with attributes
+                  (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) (:observation_id current)])}))))
+          ;; Observation does not exist => create new observation
           (let [{obs-id :observation_id} (upsert-obs tx {:created timestamp 
                                                          :time_period time-period 
                                                          :obs_value obs-value 
                                                          :series_id (:series_id series)})]
-              (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) obs-id])})))))))
+            (upsert-obs-attributes tx {:attrs (for [attr attrs] [(name (key attr)) (val attr) obs-id])})))))))
 
 
 
