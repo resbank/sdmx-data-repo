@@ -68,7 +68,7 @@
 
         ["" {:middleware [[auth/authorisation context]]}
 
-         ["/modify/data" {:middleware [log/data-change]}
+         ["/modify/data" {:middleware [[log/data-change context]]}
 
           ["/{strict-flow-ref}"
            {:put {:tags ["Modify"]
@@ -110,7 +110,7 @@
                   :parameters {:path :spartadata.sdmx.spec/data-releases-path-params
                                :query :spartadata.sdmx.spec/data-releases-query-params}
                   :handler sdmxapi/data-releases}
-            :post {:middleware [log/data-change]
+            :post {:middleware [[log/data-change context]]
                    :tags ["Release"]
                    :summary "Update data set releases (add release)"
                    :parameters {:path :spartadata.sdmx.spec/data-release-path-params
@@ -154,8 +154,7 @@
           {:get {:tags ["User"]
                  :summary "Get own user"
                  :handler userapi/retrieve-self}
-           :post {:middleware [log/user-change]
-                  :tags ["User"]
+           :post {:tags ["User"]
                   :parameters {:query :spartadata.sdmx.spec/user-self-query-params}
                   :summary "Update own user"
                   :handler userapi/update-self}}]
@@ -165,7 +164,7 @@
                  :summary "Get own user profile"
                  :handler userapi/retrieve-self-profile}}]
 
-         ["/user" {:middleware [log/user-change]}
+         ["/user" {:middleware [[log/user-change context]]}
 
           ["/{username}"
            {:put {:tags ["User"]

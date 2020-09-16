@@ -126,7 +126,7 @@
     (format-modify-user content-type 0)))
 
 (defn update-user [db content-type user user-fields]
-  (if (get-user db user)
+  (if-let [user (get-user db user)]
     (format-modify-user content-type
                         (upsert-user db (merge user 
                                                user-fields)))
@@ -134,7 +134,7 @@
 
 (defn remove-user [db content-type user]
   (format-modify-user content-type 
-                      (delete-user db (merge user))))
+                      (delete-user db user)))
 
 ;; User profiles
 

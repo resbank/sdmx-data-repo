@@ -134,7 +134,7 @@
            {:pattern (re-pattern (str #"^" context #"/userapi/.*")) 
             :handler should-be-authenticated   
             :request-method :get}
-           {:pattern (re-pattern (str #"^" context #"/userapi/self/profile")) 
+           {:pattern (re-pattern (str #"^" context #"/userapi/self")) 
             :handler should-be-authenticated   
             :request-method :post}
            {:pattern (re-pattern (str #"^" context #"/userapi/.*")) 
