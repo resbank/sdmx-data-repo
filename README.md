@@ -1,14 +1,17 @@
-# SpartaData
+# SDMX data repository
 
-SDMX compliant data repository for ERD - in support of the Sparta project 
+SDMX compliant data repository - in support of the published [nowcasting working paper](https://www.resbank.co.za/content/dam/sarb/publications/working-papers/2021/WP%202101.pdf)
+
+## Health warning
+
+**This software is a prototype** and is not suitable for production use. It is
+made available for those interested in the underlying data management concepts.
 
 ## Usage
 
 Read the documentation [here](doc).
 
 ## License
-
-Copyright © 2020 FIXME
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
